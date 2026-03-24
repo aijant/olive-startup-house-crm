@@ -8,9 +8,19 @@ type TranslationKey =
   | "auth.email"
   | "auth.password"
   | "auth.login"
+  | "auth.tabSignIn"
+  | "auth.tabSignUp"
+  | "auth.passwordTooShort"
+  | "auth.signUpSubtitle"
+  | "auth.signUpButton"
+  | "auth.signUpSuccess"
+  | "auth.signUpCheckEmail"
+  | "auth.signUpConfirmEmailMessage"
+  | "auth.signUpError"
   | "auth.forgotPassword"
   | "auth.forgotPasswordMessage"
   | "auth.forgotPasswordEnterEmail"
+  | "auth.emailInvalid"
   | "auth.loginSuccess"
   | "auth.loginError"
   | "auth.forgotPasswordError"
@@ -26,9 +36,19 @@ const dictionary: Record<Language, Record<TranslationKey, string>> = {
     "auth.email": "Email",
     "auth.password": "Password",
     "auth.login": "Log in",
+    "auth.tabSignIn": "Sign In",
+    "auth.tabSignUp": "Sign Up",
+    "auth.passwordTooShort": "Password must be at least 7 characters",
+    "auth.signUpSubtitle": "Create an account to continue",
+    "auth.signUpButton": "Create account",
+    "auth.signUpSuccess": "Signed up successfully",
+    "auth.signUpCheckEmail": "Signup successful.",
+    "auth.signUpConfirmEmailMessage": "Please check your email and open the confirmation link.",
+    "auth.signUpError": "Unable to create account",
     "auth.forgotPassword": "Forgot password?",
     "auth.forgotPasswordMessage": "Password reset will be available after backend integration.",
     "auth.forgotPasswordEnterEmail": "Enter your email first",
+    "auth.emailInvalid": "Please enter a valid email address",
     "auth.loginSuccess": "Logged in successfully",
     "auth.loginError": "Please enter a valid email and password",
     "auth.forgotPasswordError": "Unable to send reset email",
@@ -43,9 +63,19 @@ const dictionary: Record<Language, Record<TranslationKey, string>> = {
     "auth.email": "Email",
     "auth.password": "Пароль",
     "auth.login": "Войти",
+    "auth.tabSignIn": "Вход",
+    "auth.tabSignUp": "Регистрация",
+    "auth.passwordTooShort": "Пароль должен быть не короче 7 символов",
+    "auth.signUpSubtitle": "Создайте аккаунт, чтобы продолжить",
+    "auth.signUpButton": "Создать аккаунт",
+    "auth.signUpSuccess": "Регистрация прошла успешно",
+    "auth.signUpCheckEmail": "Регистрация прошла успешно.",
+    "auth.signUpConfirmEmailMessage": "Проверьте email и перейдите по ссылке для подтверждения регистрации.",
+    "auth.signUpError": "Не удалось создать аккаунт",
     "auth.forgotPassword": "Забыли пароль?",
     "auth.forgotPasswordMessage": "Сброс пароля будет доступен после интеграции бэкенда.",
     "auth.forgotPasswordEnterEmail": "Сначала введите email",
+    "auth.emailInvalid": "Введите корректный email адрес",
     "auth.loginSuccess": "Вход выполнен успешно",
     "auth.loginError": "Введите корректные email и пароль",
     "auth.forgotPasswordError": "Не удалось отправить письмо для сброса",

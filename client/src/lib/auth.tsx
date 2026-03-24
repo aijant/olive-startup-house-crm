@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { requestPasswordReset as requestPasswordResetAction, signIn as signInAction, signUp as signUpAction } from "@/actions/auth";
 
 type AuthContextValue = {
   isAuthenticated: boolean;
   userEmail: string | null;
   isAuthLoading: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  signUp: (email: string, password: string) => Promise<{ ok: boolean; hasSession?: boolean; error?: string }>;
   requestPasswordReset: (email: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
 };
@@ -42,28 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password.trim(),
-    });
+    return signInAction(email, password);
+  };
 
-    if (error) {
-      return { ok: false, error: error.message };
-    }
-
-    return { ok: true };
+  const signUp = async (email: string, password: string) => {
+    return signUpAction(email, password);
   };
 
   const requestPasswordReset = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: window.location.origin,
-    });
-
-    if (error) {
-      return { ok: false, error: error.message };
-    }
-
-    return { ok: true };
+    return requestPasswordResetAction(email);
   };
 
   const logout = async () => {
@@ -76,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userEmail,
       isAuthLoading,
       login,
+      signUp,
       requestPasswordReset,
       logout,
     }),
