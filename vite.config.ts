@@ -40,7 +40,9 @@ export default defineConfig({
         ]
       : []),
   ],
-  base:process.env.VITE_BASE_PATH || "/olive-startup-house-crm",
+  base: process.env.NODE_ENV === "production"
+    ? (process.env.VITE_BASE_PATH || "/olive-startup-house-crm")
+    : "/",
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
