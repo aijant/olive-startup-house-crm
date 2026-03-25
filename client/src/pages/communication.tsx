@@ -29,27 +29,31 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { communicationChannels, communicationStatuses } from "@shared/schema";
 import type { Communication, CommunicationStats } from "@shared/schema";
+import { getCommunications } from "@/actions/communications";
 
-console.log(communicationChannels, communicationStatuses);
 export default function CommunicationPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [, navigate] = useLocation();
 
   const { data: communications, isLoading } = useQuery<Communication[]>({
-    queryKey: ["/api/communications"],
+    queryKey: ["communications"],
+    queryFn: getCommunications,
   });
 
+  console.log(communications,'communications');
   const { data: stats } = useQuery<CommunicationStats>({
     queryKey: ["/api/communications/stats"],
   });
 
   const filteredComms = communications?.filter((comm) => {
-    const matchesSearch = comm.leadName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || comm.type === typeFilter;
-    const matchesStatus = statusFilter === "all" || comm.status === statusFilter;
+    const matchesSearch = comm.contact_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === "all" || comm.channel_id === typeFilter;
+    const matchesStatus = statusFilter === "all" || comm.status_id === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
   });
 
@@ -198,7 +202,11 @@ export default function CommunicationPage() {
               </div>
             ) : (
               filteredComms?.map((comm) => (
-                <CommunicationCard key={comm.id} communication={comm} />
+                <CommunicationCard
+                  key={comm.id}
+                  communication={comm}
+                  onClick={() => navigate(`/communication/${comm.id}`)}
+                />
               ))
             )}
           </div>

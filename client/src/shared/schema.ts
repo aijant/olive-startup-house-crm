@@ -76,27 +76,18 @@ export type CommunicationStatusValue = typeof communicationStatuses[Communicatio
 // Communication
 export interface Communication {
   id: string;
-  leadId: string;
-  leadName: string;
-  leadAvatar?: string;
-  type: CommunicationChannelId;
-  status: CommunicationStatusId;
-  message: string;
-  nextAction: string;
-  timestamp: string;
+  contact_name: string;
+  channel_id: CommunicationChannelId;
+  status_id: CommunicationStatusId;
 }
 
 const channelIds = Object.keys(communicationChannels) as [CommunicationChannelId, ...CommunicationChannelId[]];
 const statusIds = Object.keys(communicationStatuses) as [CommunicationStatusId, ...CommunicationStatusId[]];
 
 export const insertCommunicationSchema = z.object({
-  leadId: z.string(),
-  leadName: z.string(),
-  leadAvatar: z.string().optional(),
-  type: z.enum(channelIds),
-  status: z.enum(statusIds),
-  message: z.string(),
-  nextAction: z.string(),
+  contact_name: z.string(),
+  channel_id: z.enum(channelIds),
+  status_id: z.enum(statusIds),
 });
 
 export type InsertCommunication = z.infer<typeof insertCommunicationSchema>;
@@ -333,4 +324,33 @@ export interface CommunityStats {
   groupsChange: number;
   monthlyEvents: number;
   eventsChange: number;
+}
+
+// Communication Message (from get-communication-messages)
+export interface CommunicationMessage {
+  id: string;
+  gmail_thread_id: string;
+  subject: string;
+  from: string;
+  to: string;
+  direction: "outgoing" | "incoming";
+  body_text: string;
+  body_html?: string;
+  date: string;
+  received_at: string;
+}
+
+export interface CommunicationDetail {
+  id: string;
+  contact_name: string;
+  contact_email: string;
+  last_message_at: string;
+  status_id: CommunicationStatusId;
+  channel_id: CommunicationChannelId;
+}
+
+export interface CommunicationMessagesResponse {
+  communication: CommunicationDetail;
+  messages: CommunicationMessage[];
+  count: number;
 }
