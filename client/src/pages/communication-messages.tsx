@@ -11,7 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Mail, Send, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
+import DOMPurify from "dompurify";
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -95,6 +96,71 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+function scopeSelectors(selectors: string, prefix: string): string {
+  return selectors
+    .split(",")
+    .map((s) => {
+      s = s.trim();
+      if (!s) return "";
+      const replaced = s.replace(/^(html|body|:root)(\b|$)/, prefix);
+      return replaced !== s ? replaced : `${prefix} ${s}`;
+    })
+    .filter(Boolean)
+    .join(", ");
+}
+
+function scopeCss(css: string, prefix: string): string {
+  const scoped = css.replace(
+    /(@(?:media|supports)[^{]+\{)([\s\S]*?)(\}[ \t]*\})/g,
+    (_m, atRule, inner, closing) => {
+      const scopedInner = inner.replace(/([^{};]+)\{/g, (_mi: string, sel: string) =>
+        sel.trim().startsWith("@") ? _mi : `${scopeSelectors(sel.trim(), prefix)} {`
+      );
+      return atRule + scopedInner + closing;
+    }
+  );
+  return scoped.replace(
+    /([^{@\n][^{]*)\{/g,
+    (_m, sel) => `${scopeSelectors(sel.trim(), prefix)} {`
+  );
+}
+
+function HtmlEmailBody({ html, scopeId }: { html: string; scopeId: string }) {
+  const scope = `em-${scopeId.replace(/[^a-z0-9]/gi, "")}`;
+
+  const { bodyHtml, scopedCss } = useMemo(() => {
+    const clean = DOMPurify.sanitize(html, {
+      WHOLE_DOCUMENT: true,
+      FORBID_TAGS: ["script", "noscript", "form", "object", "embed", "iframe"],
+    });
+
+    const doc = new DOMParser().parseFromString(clean, "text/html");
+
+    let rawCss = "";
+    doc.querySelectorAll("style").forEach((el) => {
+      rawCss += el.textContent ?? "";
+      el.remove();
+    });
+
+    doc.querySelectorAll("a").forEach((a) => {
+      a.setAttribute("target", "_blank");
+      a.setAttribute("rel", "noopener noreferrer");
+    });
+
+    return {
+      bodyHtml: doc.body.innerHTML,
+      scopedCss: rawCss ? scopeCss(rawCss, `.${scope}`) : "",
+    };
+  }, [html, scope]);
+
+  return (
+    <div className={`${scope} text-sm leading-relaxed overflow-x-auto`}>
+      {scopedCss && <style>{scopedCss}</style>}
+      <div dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+    </div>
+  );
+}
+
 function MessageBubble({ message }: { message: CommunicationMessage }) {
   const isOutgoing = message.direction === "outgoing";
 
@@ -140,18 +206,29 @@ function MessageBubble({ message }: { message: CommunicationMessage }) {
           </span>
         </div>
 
-        <div
-          className={cn(
-            "rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words",
-            isOutgoing
-              ? "bg-primary text-primary-foreground rounded-tr-sm"
-              : "bg-muted text-foreground rounded-tl-sm",
-          )}
-        >
-          {message.body_text
-            ? cleanMessageText(message.body_text) || "(no content)"
-            : "(no content)"}
-        </div>
+        {message.body_html ? (
+          <div
+            className={cn(
+              "rounded-2xl overflow-hidden w-full max-w-full",
+              isOutgoing ? "rounded-tr-sm" : "rounded-tl-sm",
+            )}
+          >
+            <HtmlEmailBody html={message.body_html} scopeId={message.id} />
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words",
+              isOutgoing
+                ? "bg-primary text-primary-foreground rounded-tr-sm"
+                : "bg-muted text-foreground rounded-tl-sm",
+            )}
+          >
+            {message.body_text
+              ? cleanMessageText(message.body_text) || "(no content)"
+              : "(no content)"}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -241,8 +318,6 @@ export default function CommunicationMessagesPage() {
       handleSend();
     }
   }
-
-  console.log(comm,'comm in messages page')
 
   return (
     <div className="flex flex-col h-[calc(100dvh-53px)] w-full max-w-3xl mx-auto">

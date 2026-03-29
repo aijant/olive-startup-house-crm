@@ -76,6 +76,7 @@ export function CommunicationCard({
   const statusLabel = communicationStatuses[communication.status_id];
   const statusStyle = statusConfig[statusLabel] ?? statusConfig["Pending"];
 
+
   return (
     <div
       className="p-4 rounded-md border border-border hover-elevate cursor-pointer transition-colors"
@@ -90,21 +91,33 @@ export function CommunicationCard({
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h4 className="font-medium text-sm">{communication.contact_name}</h4>
-            <Badge variant="secondary" className="text-xs">
-              {typeIcons[channelLabel]}
-              <span className="ml-1">{channelLabel}</span>
-            </Badge>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h4 className="font-medium text-sm leading-tight">{communication.contact_name}</h4>
+              <Badge
+                variant="secondary"
+                className={cn("mt-2 text-xs", statusStyle.color)}
+              >
+                {statusStyle.icon}
+                <span className="ml-1">{statusLabel}</span>
+              </Badge>
+            </div>
+            <div className="flex flex-col items-end gap-1 min-w-0 max-w-[45%]">
+              <Badge
+                variant="outline"
+                className="text-xs flex items-center gap-1 px-2 py-0.5 border-border bg-muted/40 text-foreground font-normal"
+              >
+                {typeIcons[channelLabel]}
+                {channelLabel}
+              </Badge>
+              {communication.main_mail && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 min-w-0 w-full">
+                  <Mail className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{communication.main_mail}</span>
+                </p>
+              )}
+            </div>
           </div>
-
-          <Badge
-            variant="secondary"
-            className={cn("mt-2 text-xs", statusStyle.color)}
-          >
-            {statusStyle.icon}
-            <span className="ml-1">{statusLabel}</span>
-          </Badge>
         </div>
       </div>
     </div>

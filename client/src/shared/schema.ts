@@ -79,6 +79,7 @@ export interface Communication {
   contact_name: string;
   channel_id: CommunicationChannelId;
   status_id: CommunicationStatusId;
+  main_mail?: string;
 }
 
 const channelIds = Object.keys(communicationChannels) as [CommunicationChannelId, ...CommunicationChannelId[]];
@@ -347,6 +348,7 @@ export interface CommunicationDetail {
   last_message_at: string;
   status_id: CommunicationStatusId;
   channel_id: CommunicationChannelId;
+  main_mail?: string;
 }
 
 export interface CommunicationMessagesResponse {
