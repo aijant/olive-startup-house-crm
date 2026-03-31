@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { BottomNavBar } from "@/components/bottom-nav-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import NotFound from "@/pages/not-found";
@@ -89,10 +90,11 @@ function AppContent() {
                 </div>
               </header>
               <ScrollArea className="flex-1">
-                <main className="min-h-full">
+                <main className="min-h-full pb-16 md:pb-0">
                   <Router />
                 </main>
               </ScrollArea>
+              <BottomNavBar />
             </div>
           </div>
         </SidebarProvider>

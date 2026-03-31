@@ -107,7 +107,7 @@ export function AppSidebar() {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <Sidebar>
+    <Sidebar className="hidden md:flex">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <Link href="/" className="flex items-center gap-3" data-testid="link-logo">
           <div className="flex items-center justify-center w-9 h-9 rounded-md bg-primary">
