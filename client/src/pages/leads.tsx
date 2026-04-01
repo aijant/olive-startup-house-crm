@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -150,48 +150,48 @@ export default function LeadsPage() {
       </Card>
 
       {/* Leads List */}
-      <Card>
-        <CardHeader className="pb-3">
-          <Tabs value={statusTab} onValueChange={setStatusTab}>
-            <TabsList>
-              <TabsTrigger value="all">
-                All Leads <Badge variant="secondary" className="ml-2">{leadsByStatus.all}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="New">
-                New <Badge variant="secondary" className="ml-2">{leadsByStatus.New}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="Contacted">
-                Contacted <Badge variant="secondary" className="ml-2">{leadsByStatus.Contacted}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="Qualified">
-                Qualified <Badge variant="secondary" className="ml-2">{leadsByStatus.Qualified}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="Converted">
-                Converted <Badge variant="secondary" className="ml-2">{leadsByStatus.Converted}</Badge>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-md" />
-              ))
-            ) : filteredLeads?.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground mt-4">No leads found</p>
-                <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
-              </div>
-            ) : (
-              filteredLeads?.map((lead) => (
-                <LeadCard key={lead.id} lead={lead} />
-              ))
-            )}
+        <div className="rounded-lg border bg-card">
+          <div className="p-6 pb-3">
+            <Tabs value={statusTab} onValueChange={setStatusTab}>
+              <TabsList className="flex-wrap h-auto gap-1">
+                <TabsTrigger value="all">
+                  All Leads <Badge variant="secondary" className="ml-2">{leadsByStatus.all}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="New">
+                  New <Badge variant="secondary" className="ml-2">{leadsByStatus.New}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="Contacted">
+                  Contacted <Badge variant="secondary" className="ml-2">{leadsByStatus.Contacted}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="Qualified">
+                  Qualified <Badge variant="secondary" className="ml-2">{leadsByStatus.Qualified}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="Converted">
+                  Converted <Badge variant="secondary" className="ml-2">{leadsByStatus.Converted}</Badge>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
-        </CardContent>
-      </Card>
+          <div className="p-6 pt-0">
+            <div className="space-y-2">
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-md" />
+                ))
+              ) : filteredLeads?.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground mt-4">No leads found</p>
+                  <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
+                </div>
+              ) : (
+                filteredLeads?.map((lead) => (
+                  <LeadCard key={lead.id} lead={lead} />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
     </div>
   );
 }
