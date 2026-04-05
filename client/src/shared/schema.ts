@@ -338,12 +338,16 @@ export const materialTypes = {
 export type MaterialTypeId = keyof typeof materialTypes;
 export type MaterialTypeValue = typeof materialTypes[MaterialTypeId];
 
-const materialTypeIds = Object.keys(materialTypes) as [MaterialTypeId, ...MaterialTypeId[]];
+export const materialTypeIds = Object.fromEntries(
+  Object.entries(materialTypes).map(([id, val]) => [val, id])
+) as Record<MaterialTypeValue, MaterialTypeId>;
+
+const materialTypeIdTuple = Object.keys(materialTypes) as [MaterialTypeId, ...MaterialTypeId[]];
 
 export const insertMaterialSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  type: z.enum(materialTypeIds),
+  type: z.enum(materialTypeIdTuple),
   url: z.union([z.string().url(), z.literal("")]).optional(),
 });
 
