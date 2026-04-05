@@ -353,6 +353,27 @@ export const insertMaterialSchema = z.object({
 
 export type InsertMaterial = z.infer<typeof insertMaterialSchema>;
 
+// Community Profile
+export interface CommunityProfile {
+  id: string;
+  name: string;
+  position: string;
+  description?: string;
+  room?: string;
+  linkedin_url?: string;
+  avatar_url?: string;
+}
+
+export const insertProfileSchema = z.object({
+  name: z.string().min(1),
+  position: z.string().min(1),
+  description: z.string().optional(),
+  room: z.string().optional(),
+  linkedin_url: z.union([z.string().url(), z.literal("")]).optional(),
+});
+
+export type InsertProfile = z.infer<typeof insertProfileSchema>;
+
 // Community Stats
 export interface CommunityStats {
   activeMembers: number;
