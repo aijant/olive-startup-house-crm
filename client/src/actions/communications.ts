@@ -22,3 +22,18 @@ export const sendEmailMessage = (payload: {
     method: "POST",
     body: payload,
   });
+
+export type CreateCalendarEventPayload = {
+  communication_id: string;
+  title: string;
+  start: string;
+  end: string;
+  description: string;
+  location: string;
+};
+
+export const createCalendarEvent = (payload: CreateCalendarEventPayload) =>
+  apiFetch<{ success?: boolean }>("create-calendar-event", {
+    method: "POST",
+    body: payload,
+  });
