@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { getCommunicationMessages, sendEmailMessage } from "@/actions/communications";
+import {
+  createCalendarEvent,
+  getCommunicationMessages,
+  sendEmailMessage,
+} from "@/actions/communications";
 import { communicationChannels, communicationStatuses } from "@shared/schema";
 import type { CommunicationMessage } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +13,33 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Mail, Send, Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  ArrowLeft,
+  Calendar,
+  ChevronDown,
+  FileText,
+  Mail,
+  Phone,
+  Send,
+  Loader2,
+  Video,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRef, useEffect, useMemo, useState } from "react";
 import DOMPurify from "dompurify";
@@ -270,6 +300,7 @@ export default function CommunicationMessagesPage() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const communicationId = params.id;
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -277,6 +308,14 @@ export default function CommunicationMessagesPage() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
+
+  const [inPersonTourOpen, setInPersonTourOpen] = useState(false);
+  const [tourTitle, setTourTitle] = useState("");
+  const [tourDescription, setTourDescription] = useState("");
+  const [tourLocation, setTourLocation] = useState("");
+  const [tourStart, setTourStart] = useState("");
+  const [tourEnd, setTourEnd] = useState("");
+  const [tourFormError, setTourFormError] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["communication-messages", communicationId],
@@ -331,6 +370,66 @@ export default function CommunicationMessagesPage() {
       setSendError(err.message ?? "Failed to send message.");
     },
   });
+
+  const createCalendarMutation = useMutation({
+    mutationFn: createCalendarEvent,
+    onSuccess: () => {
+      setTourFormError(null);
+      setInPersonTourOpen(false);
+      setTourTitle("");
+      setTourDescription("");
+      setTourLocation("");
+      setTourStart("");
+      setTourEnd("");
+      toast({
+        title: "Meeting scheduled",
+        description: "Your in-person tour is on the thread.",
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["communication-messages", communicationId],
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Could not create meeting",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  function handleSubmitInPersonTour(e: React.FormEvent) {
+    e.preventDefault();
+    if (!communicationId) return;
+    const title = tourTitle.trim();
+    if (!title) {
+      setTourFormError("Title is required.");
+      return;
+    }
+    if (!tourStart || !tourEnd) {
+      setTourFormError("Start and end are required.");
+      return;
+    }
+    const start = new Date(tourStart);
+    const end = new Date(tourEnd);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      setTourFormError("Invalid date or time.");
+      return;
+    }
+    if (end <= start) {
+      setTourFormError("End must be after start.");
+      return;
+    }
+    setTourFormError(null);
+    createCalendarMutation.mutate({
+      communication_id: communicationId,
+      title,
+      start: start.toISOString(),
+      end: end.toISOString(),
+      description: tourDescription.trim(),
+      location: tourLocation.trim(),
+    });
+  }
 
   function handleSend() {
     const trimmedBody = body.trim();
@@ -393,6 +492,89 @@ export default function CommunicationMessagesPage() {
             <p className="text-xs text-muted-foreground">{comm.contact_email}</p>
           </div>
         ) : null}
+
+        {comm && (
+          <div className="shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 px-2"
+                  aria-label="Quick actions"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[12rem]">
+                <DropdownMenuItem
+                  className="h-auto cursor-pointer flex-col items-stretch gap-0 py-2"
+                  onSelect={() => {
+                    toast({
+                      title: "Video tour",
+                      description: "Send video link from your workflow when available.",
+                    });
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <Video className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="flex min-w-0 flex-col items-start gap-0">
+                      <span>Video tour</span>
+                      <span className="text-xs text-muted-foreground">
+                        Send a video tour
+                      </span>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="h-auto cursor-pointer flex-col items-stretch gap-0 py-2"
+                  onSelect={() => setInPersonTourOpen(true)}
+                >
+                  <div className="flex items-start gap-2">
+                    <Calendar className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="flex min-w-0 flex-col items-start gap-0">
+                      <span>In-person tour</span>
+                      <span className="text-xs text-muted-foreground">
+                        Schedule a tour
+                      </span>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="h-auto cursor-pointer flex-col items-stretch gap-0 py-2"
+                  onSelect={() => navigate("/community")}
+                >
+                  <div className="flex items-start gap-2">
+                    <FileText className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="flex min-w-0 flex-col items-start gap-0">
+                      <span>Documents</span>
+                      <span className="text-xs text-muted-foreground">
+                        Community
+                      </span>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="h-auto cursor-pointer flex-col items-stretch gap-0 py-2"
+                  onSelect={() => {
+                    toast({
+                      title: "Phone call",
+                      description:
+                        "No phone number on this thread yet. Add it to the lead record to dial from here.",
+                    });
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <Phone className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="flex min-w-0 flex-col items-start gap-0">
+                      <span>Phone call</span>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
 
         {data && (
           <span className="text-xs text-muted-foreground shrink-0">
@@ -490,6 +672,103 @@ export default function CommunicationMessagesPage() {
           <p className="text-xs text-destructive">{sendError}</p>
         )}
       </div>
+
+      <Dialog open={inPersonTourOpen} onOpenChange={setInPersonTourOpen}>
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={handleSubmitInPersonTour}>
+            <DialogHeader>
+              <DialogTitle>In-person tour</DialogTitle>
+              <DialogDescription>
+                Create a meeting for this thread. It will appear in the chat
+                after the event is created.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="tour-title">Title</Label>
+                <Input
+                  id="tour-title"
+                  value={tourTitle}
+                  onChange={(e) => setTourTitle(e.target.value)}
+                  placeholder="Tour or meeting title"
+                  disabled={createCalendarMutation.isPending}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="tour-start">Start</Label>
+                  <Input
+                    id="tour-start"
+                    type="datetime-local"
+                    value={tourStart}
+                    onChange={(e) => setTourStart(e.target.value)}
+                    disabled={createCalendarMutation.isPending}
+                    className="datetime-local-input block h-auto min-h-10 py-2"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="tour-end">End</Label>
+                  <Input
+                    id="tour-end"
+                    type="datetime-local"
+                    value={tourEnd}
+                    onChange={(e) => setTourEnd(e.target.value)}
+                    disabled={createCalendarMutation.isPending}
+                    className="datetime-local-input block h-auto min-h-10 py-2"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="tour-location">Location</Label>
+                <Input
+                  id="tour-location"
+                  value={tourLocation}
+                  onChange={(e) => setTourLocation(e.target.value)}
+                  placeholder="Address or place"
+                  disabled={createCalendarMutation.isPending}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="tour-description">Description</Label>
+                <Textarea
+                  id="tour-description"
+                  value={tourDescription}
+                  onChange={(e) => setTourDescription(e.target.value)}
+                  placeholder="Optional notes"
+                  rows={3}
+                  disabled={createCalendarMutation.isPending}
+                  className="resize-none"
+                />
+              </div>
+              {tourFormError && (
+                <p className="text-sm text-destructive">{tourFormError}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setInPersonTourOpen(false)}
+                disabled={createCalendarMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createCalendarMutation.isPending}>
+                {createCalendarMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Scheduling…
+                  </>
+                ) : (
+                  "Create meeting"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

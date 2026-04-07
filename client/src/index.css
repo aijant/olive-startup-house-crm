@@ -176,6 +176,21 @@
     @apply hidden;
   }
 
+  /* Native datetime-local: keep calendar picker visible and clickable (esp. dark + narrow columns) */
+  .datetime-local-input {
+    color-scheme: light;
+  }
+  .dark .datetime-local-input {
+    color-scheme: dark;
+  }
+  .datetime-local-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 1;
+  }
+  .dark .datetime-local-input::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.15);
+  }
+
   /* Placeholder styling for contentEditable div */
   [contenteditable][data-placeholder]:empty::before {
     content: attr(data-placeholder);
