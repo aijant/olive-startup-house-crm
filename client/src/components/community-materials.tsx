@@ -27,8 +27,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
-  COMMUNITY_DOCUMENTS_BUCKET,
   downloadCommunityDocumentFromStorage,
+  storageBucketForCommunityDocument,
 } from "@/lib/community-document-storage";
 import type {
   InsertMaterial,
@@ -358,6 +358,7 @@ export function CommunityMaterials() {
         throw new Error("Session expired — please log out and log in again.");
       }
 
+      // load_community_document should store files in `community-documents` for both doc_type values (listing uses doc_type only).
       const { error: fnError } = await supabase.functions.invoke("load_community_document", {
         body,
         headers: { Authorization: `Bearer ${refreshData.session.access_token}` },
@@ -471,7 +472,7 @@ export function CommunityMaterials() {
     try {
       const result = await downloadCommunityDocumentFromStorage(
         supabase,
-        COMMUNITY_DOCUMENTS_BUCKET,
+        storageBucketForCommunityDocument(doc),
         doc.file_path,
         doc.title,
       );

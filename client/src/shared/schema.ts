@@ -382,7 +382,7 @@ export interface CommunityDocument {
   type?: { id: string; value: MaterialTypeValue };
   url?: string;
   link?: string | null;
-  /** Storage object key in bucket `community-documents` (non-link materials) */
+  /** Storage object key in bucket `community-documents` for non-link materials (common and client audiences) */
   file_path?: string | null;
   created_at?: string;
 }
