@@ -61,11 +61,12 @@ import {
   Phone,
   Send,
   Loader2,
+  Receipt,
   Video,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRef, useEffect, useMemo, useState } from "react";
+import { useRef, useEffect, useMemo, useState, type ReactNode } from "react";
 import DOMPurify from "dompurify";
 
 const statusColors: Record<string, string> = {
@@ -90,9 +91,30 @@ const VIDEO_TOUR_OPTIONS = [
   },
 ] as const;
 
-function appendVideoTourLinkToBody(prev: string, url: string): string {
-  if (!prev.trim()) return url;
-  return `${prev.trimEnd()}\n\n${url}`;
+/** Appended from Quick actions → Invoices & payment → Invoice */
+const INVOICE_MESSAGE_SNIPPET =
+  "If you need a copy of your invoice or have billing questions, reply to this thread and we will help.";
+
+const ZELLE_PAYMENT_URL =
+  "https://enroll.zellepay.com/qr-codes/?data=eyJuYW1lIjoiT0xJVkUgUk9PTVMsIElOQy4iLCJ0b2tlbiI6ImFha2VsZWV2QGhvdG1haWwuY29tIiwiYWN0aW9uIjoicGF5bWVudCJ9";
+
+// TODO: Replace with your real QuickBooks / Intuit payment link when available.
+const QUICKBOOKS_PAYMENT_URL_PLACEHOLDER =
+  "https://example.com/quickbooks-payment-placeholder";
+
+const INVOICE_PAYMENT_OPTIONS = [
+  { id: "zelle", label: "Zelle", content: ZELLE_PAYMENT_URL },
+  {
+    id: "quickbooks",
+    label: "QuickBooks",
+    content: QUICKBOOKS_PAYMENT_URL_PLACEHOLDER,
+  },
+] as const;
+
+/** Appends a line or URL block to the compose body (video tours, payment links, invoice text). */
+function appendParagraphToBody(prev: string, line: string): string {
+  if (!prev.trim()) return line;
+  return `${prev.trimEnd()}\n\n${line}`;
 }
 
 function formatDate(dateString: string) {
@@ -106,7 +128,13 @@ function formatDate(dateString: string) {
   });
 }
 
-function cleanMessageText(raw: string): string {
+type CleanMessageTextOptions = {
+  direction?: "incoming" | "outgoing";
+};
+
+function cleanMessageText(raw: string, options?: CleanMessageTextOptions): string {
+  const isOutgoing = options?.direction === "outgoing";
+
   let text = raw
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<script[\s\S]*?<\/script>/gi, "")
@@ -135,8 +163,8 @@ function cleanMessageText(raw: string): string {
 
   const cleaned = lines.filter((line) => {
     const t = line.trim();
-    // Drop bare long tracking/obfuscated URLs
-    if (/^https?:\/\/\S{50,}$/.test(t)) return false;
+    // Drop bare long tracking/obfuscated URLs (incoming newsletters / noise only)
+    if (!isOutgoing && /^https?:\/\/\S{50,}$/.test(t)) return false;
     // Drop email footer boilerplate lines
     if (
       /unsubscribe|privacy policy|you received this (message|email)|manage your settings|report this message|block message sender|copyright.*\d{4}|all rights reserved|please don.t reply|do not reply|visit your account/i.test(
@@ -170,6 +198,65 @@ const AUTO_ATTACHED_DOCS_SUFFIX =
 
 function stripAutoAttachedDocumentsSuffix(text: string): string {
   return text.replace(AUTO_ATTACHED_DOCS_SUFFIX, "").trimEnd();
+}
+
+/** Renders plain text with http(s) URLs as external links. */
+function LinkifiedText({
+  text,
+  linkClassName,
+}: {
+  text: string;
+  linkClassName: string;
+}) {
+  const re = /https?:\/\/[^\s<]+/gi;
+  const out: ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let k = 0;
+  while ((m = re.exec(text)) !== null) {
+    const start = m.index;
+    const raw = m[0];
+    if (start > last) {
+      out.push(<span key={`t-${k++}`}>{text.slice(last, start)}</span>);
+    }
+    let href = raw;
+    while (href.length > 0 && /[.,;:!?)\]}>]$/.test(href)) {
+      href = href.slice(0, -1);
+    }
+    let ok = false;
+    try {
+      const u = new URL(href);
+      ok = u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      ok = false;
+    }
+    if (ok) {
+      out.push(
+        <a
+          key={`a-${k++}`}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClassName}
+        >
+          {href}
+        </a>,
+      );
+      if (raw.length > href.length) {
+        out.push(<span key={`t-${k++}`}>{raw.slice(href.length)}</span>);
+      }
+    } else {
+      out.push(<span key={`t-${k++}`}>{raw}</span>);
+    }
+    last = start + raw.length;
+  }
+  if (last < text.length) {
+    out.push(<span key={`t-${k++}`}>{text.slice(last)}</span>);
+  }
+  if (out.length === 0) {
+    return <>{text}</>;
+  }
+  return <>{out}</>;
 }
 
 function getInitials(name: string) {
@@ -422,7 +509,7 @@ function MessageBubble({ message }: { message: CommunicationMessage }) {
     : message.from.replace(/<.*>/, "").trim() || message.from;
 
   const cleanedBodyText = message.body_text
-    ? cleanMessageText(message.body_text) || ""
+    ? cleanMessageText(message.body_text, { direction: message.direction }) || ""
     : "";
   const plainTextForBubble =
     isOutgoing && hasAttachments
@@ -506,9 +593,21 @@ function MessageBubble({ message }: { message: CommunicationMessage }) {
             )}
           >
             <div className="px-4 py-2.5">
-              {message.body_text
-                ? plainTextForBubble || "(no content)"
-                : "(no content)"}
+              {message.body_text ? (
+                plainTextForBubble ? (
+                  <LinkifiedText
+                    text={plainTextForBubble}
+                    linkClassName={cn(
+                      "underline underline-offset-2 break-all",
+                      isOutgoing ? "text-primary-foreground" : "text-inherit",
+                    )}
+                  />
+                ) : (
+                  "(no content)"
+                )
+              ) : (
+                "(no content)"
+              )}
             </div>
             {isOutgoing && hasAttachments && (
               <div className="border-t border-primary-foreground/25 px-4 py-2.5">
@@ -971,7 +1070,7 @@ export default function CommunicationMessagesPage() {
                         key={opt.id}
                         onSelect={() => {
                           setBody((prev) =>
-                            appendVideoTourLinkToBody(prev, opt.url),
+                            appendParagraphToBody(prev, opt.url),
                           );
                           toast({
                             title: "Video link added",
@@ -1030,6 +1129,42 @@ export default function CommunicationMessagesPage() {
                     </div>
                   </div>
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="h-auto cursor-pointer gap-2 py-2 pl-2 pr-1 [&>svg:last-child]:ml-0">
+                    <Receipt className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="flex min-w-0 flex-1 flex-col items-start gap-0 text-left">
+                      <span>Invoices</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        Zelle, QuickBooks
+                      </span>
+                    </div>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent
+                    alignOffset={-4}
+                    className="min-w-[12rem]"
+                  >
+                    {INVOICE_PAYMENT_OPTIONS.map((opt) => (
+                      <DropdownMenuItem
+                        key={opt.id}
+                        onSelect={() => {
+                          setBody((prev) =>
+                            appendParagraphToBody(prev, opt.content),
+                          );
+                          toast({
+                            title: "Added to message",
+                            description:
+                              "The text or link was added to your message only (not opened in the browser).",
+                          });
+                          queueMicrotask(() => {
+                            composeBodyRef.current?.focus();
+                          });
+                        }}
+                      >
+                        {opt.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
