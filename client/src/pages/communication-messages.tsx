@@ -4,12 +4,14 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import {
   createCalendarEvent,
+  createLeadFromCommunication,
   getCommunicationMessages,
   sendEmailMessage,
 } from "@/actions/communications";
+import { fetchLeadByIdFromSupabase } from "@/lib/leads-supabase";
 import { getCommunityDocuments, getClientDocuments } from "@/actions/community";
 import { communicationChannels, communicationStatuses } from "@shared/schema";
 import type {
@@ -18,10 +20,11 @@ import type {
   CommunicationMessagesResponse,
   CommunityDocument,
   CommunityDocumentsPagination,
+  Lead,
 } from "@shared/schema";
 import { supabase } from "@/lib/supabase";
 import { downloadCommunityDocumentFromStorage } from "@/lib/community-document-storage";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog,
   DialogContent,
@@ -62,6 +66,7 @@ import {
   Send,
   Loader2,
   Receipt,
+  UserPlus,
   Video,
   X,
 } from "lucide-react";
@@ -629,6 +634,7 @@ export default function CommunicationMessagesPage() {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const communicationId = params.id;
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -683,6 +689,13 @@ export default function CommunicationMessagesPage() {
 
   const comm = data?.communication;
   const messages = data?.messages ?? [];
+
+  const leadId = comm?.lead_id ?? undefined;
+  const { data: linkedLead, isLoading: leadLoading } = useQuery<Lead>({
+    queryKey: ["communication-lead", communicationId, leadId],
+    queryFn: () => fetchLeadByIdFromSupabase(leadId!),
+    enabled: Boolean(communicationId && leadId),
+  });
 
   const sortedMessages = [...messages].sort(
     (a, b) =>
@@ -893,6 +906,32 @@ export default function CommunicationMessagesPage() {
     },
   });
 
+  const createLeadMutation = useMutation({
+    mutationFn: () => createLeadFromCommunication(communicationId!),
+    onSuccess: async (res) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["communication-messages", communicationId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["communications"] });
+      if (res?.lead_id) {
+        await queryClient.invalidateQueries({
+          queryKey: ["communication-lead", communicationId, res.lead_id],
+        });
+      }
+      toast({
+        title: "Lead created",
+        description: "This contact is now a lead.",
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Could not create lead",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   function handleSubmitInPersonTour(e: React.FormEvent) {
     e.preventDefault();
     if (!communicationId) return;
@@ -971,15 +1010,20 @@ export default function CommunicationMessagesPage() {
       selectedDocumentIds,
       documentTitlesById,
     );
+    const isInvoice = INVOICE_PAYMENT_OPTIONS.some((opt) =>
+      bodyWithAttachments.includes(opt.content),
+    );
     const payload: {
       communication_id: string;
       body: string;
       subject: string;
       document_ids?: string[];
+      is_invoice?: boolean;
     } = {
       communication_id: communicationId,
       body: bodyWithAttachments,
       subject: trimmedSubject,
+      is_invoice: isInvoice,
     };
     if (selectedDocumentIds.length > 0) {
       payload.document_ids = selectedDocumentIds;
@@ -1034,11 +1078,47 @@ export default function CommunicationMessagesPage() {
               )}
             </div>
             <p className="text-xs text-muted-foreground">{comm.contact_email}</p>
+            {comm.lead_id && (
+              <div className="flex items-center gap-2 flex-wrap mt-1">
+                {leadLoading ? (
+                  <Skeleton className="h-5 w-36" />
+                ) : linkedLead ? (
+                  <Link
+                    href="/leads"
+                    className={cn(
+                      badgeVariants({ variant: "outline" }),
+                      "text-xs font-normal gap-1 inline-flex items-center font-semibold",
+                    )}
+                  >
+                    Lead: {linkedLead.name}
+                    <span className="text-muted-foreground font-normal">· {linkedLead.status}</span>
+                  </Link>
+                ) : null}
+              </div>
+            )}
           </div>
         ) : null}
 
         {comm && (
-          <div className="shrink-0">
+          <div className="shrink-0 flex items-center gap-2">
+            {!comm.lead_id && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1 shrink-0"
+                disabled={createLeadMutation.isPending}
+                onClick={() => createLeadMutation.mutate()}
+                data-testid="button-made-to-lead"
+              >
+                {createLeadMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
+                Made to lead
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -1050,7 +1130,11 @@ export default function CommunicationMessagesPage() {
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[12rem]">
+              <DropdownMenuContent
+                align={isMobile ? "start" : "end"}
+                collisionPadding={8}
+                className="min-w-[12rem] max-w-[min(20rem,calc(100vw-1rem))] sm:max-w-none"
+              >
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="h-auto cursor-pointer gap-2 py-2 pl-2 pr-1 [&>svg:last-child]:ml-0">
                     <Video className="mt-0.5 h-4 w-4 shrink-0" />
@@ -1062,7 +1146,8 @@ export default function CommunicationMessagesPage() {
                     </div>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent
-                    alignOffset={-4}
+                    side={isMobile ? "bottom" : "right"}
+                    alignOffset={isMobile ? 0 : -4}
                     className="min-w-[12rem]"
                   >
                     {VIDEO_TOUR_OPTIONS.map((opt) => (
@@ -1140,7 +1225,8 @@ export default function CommunicationMessagesPage() {
                     </div>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent
-                    alignOffset={-4}
+                    side={isMobile ? "bottom" : "right"}
+                    alignOffset={isMobile ? 0 : -4}
                     className="min-w-[12rem]"
                   >
                     {INVOICE_PAYMENT_OPTIONS.map((opt) => (
