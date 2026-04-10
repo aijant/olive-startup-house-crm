@@ -2,19 +2,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Lead } from "@shared/schema";
+import { LEAD_STATUS_BADGE_CLASSES } from "@/lib/lead-status-badge-classes";
 
 interface LeadCardProps {
   lead: Lead;
   onClick?: () => void;
 }
-
-const statusColors: Record<string, string> = {
-  New: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  Contacted: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  Qualified: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  Converted: "bg-primary/10 text-primary",
-  Lost: "bg-muted text-muted-foreground",
-};
 
 const sourceIcons: Record<string, string> = {
   Instagram: "📍",
@@ -72,7 +65,7 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
           <h4 className="font-medium text-sm truncate">{lead.name}</h4>
           <Badge 
             variant="secondary" 
-            className={cn("text-xs shrink-0", statusColors[lead.status])}
+            className={cn("text-xs shrink-0", LEAD_STATUS_BADGE_CLASSES[lead.status])}
           >
             {lead.status}
           </Badge>
