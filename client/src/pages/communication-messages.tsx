@@ -12,6 +12,7 @@ import {
   sendEmailMessage,
 } from "@/actions/communications";
 import { fetchLeadByIdFromSupabase } from "@/lib/leads-supabase";
+import { getLeadStatusBadgeClass } from "@/lib/lead-status-badge-classes";
 import { getCommunityDocuments, getClientDocuments } from "@/actions/community";
 import { communicationChannels, communicationStatuses } from "@shared/schema";
 import type {
@@ -1083,16 +1084,26 @@ export default function CommunicationMessagesPage() {
                 {leadLoading ? (
                   <Skeleton className="h-5 w-36" />
                 ) : linkedLead ? (
-                  <Link
-                    href="/leads"
-                    className={cn(
-                      badgeVariants({ variant: "outline" }),
-                      "text-xs font-normal gap-1 inline-flex items-center font-semibold",
-                    )}
-                  >
-                    Lead: {linkedLead.name}
-                    <span className="text-muted-foreground font-normal">· {linkedLead.status}</span>
-                  </Link>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Link
+                      href="/leads"
+                      className={cn(
+                        badgeVariants({ variant: "outline" }),
+                        "text-xs font-normal gap-1 inline-flex items-center font-semibold",
+                      )}
+                    >
+                      Lead: {linkedLead.name}
+                    </Link>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "text-xs shrink-0",
+                        getLeadStatusBadgeClass(linkedLead.status),
+                      )}
+                    >
+                      {linkedLead.status}
+                    </Badge>
+                  </div>
                 ) : null}
               </div>
             )}
