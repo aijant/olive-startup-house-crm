@@ -18,8 +18,33 @@ export const leadSources = ["Instagram", "Website", "Booking.com", "Airbnb", "Re
 export type LeadSource = typeof leadSources[number];
 
 // Lead Status
-export const leadStatuses = ["New", "Contacted", "Qualified", "Converted", "Lost"] as const;
+export const leadStatuses = [
+  "New",
+  "Contacted",
+  "Qualified",
+  "Payment Pending",
+  "Converted",
+  "Lost",
+] as const;
 export type LeadStatus = typeof leadStatuses[number];
+
+// Lead statuses (Supabase `lead_statuses.id` → label). Lost has no id in app yet.
+export const leadStatusIds = {
+  "04f84734-b0f8-4701-9a4c-5cc245dab5e2": "New",
+  "a23c166c-7f48-49ed-b47e-397649f3b06a": "Contacted",
+  "ac064815-cb42-445d-a247-6e05e3fe22d8": "Qualified",
+  "2e210653-93d7-40ab-a0d9-6a9296a3c0a9": "Payment Pending",
+  "369fe4e8-38a3-4d60-a0e0-adbdb17e5f9d": "Converted",
+} as const;
+
+export type LeadStatusId = keyof typeof leadStatusIds;
+
+export function getLeadStatusId(label: LeadStatus): string | undefined {
+  for (const [id, l] of Object.entries(leadStatusIds)) {
+    if (l === label) return id;
+  }
+  return undefined;
+}
 
 // Lead
 export interface Lead {

@@ -6,6 +6,8 @@ export const LEAD_STATUS_BADGE_CLASSES: Record<LeadStatus, string> = {
     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   Qualified:
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  "Payment Pending":
+    "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
   Converted: "bg-primary/10 text-primary",
   Lost: "bg-muted text-muted-foreground",
 };

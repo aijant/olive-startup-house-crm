@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import {
   leadSources,
   leadStatuses,
+  leadStatusIds,
   type Lead,
   type LeadSource,
   type LeadStatus,
@@ -16,16 +17,9 @@ function normalizeUuidString(s: string): string {
   return s.trim().toLowerCase();
 }
 
-/** Supabase `lead_statuses` (or similar) row ids → app `LeadStatus` labels */
-const LEAD_STATUS_UUID_TO_LABEL: Record<string, LeadStatus> = {
-  "04f84734-b0f8-4701-9a4c-5cc245dab5e2": "New",
-  "a23c166c-7f48-49ed-b47e-397649f3b06a": "Contacted",
-  "ac064815-cb42-445d-a247-6e05e3fe22d8": "Qualified",
-  "369fe4e8-38a3-4d60-a0e0-adbdb17e5f9d": "Converted",
-};
-
+/** Supabase `lead_statuses` row ids → app `LeadStatus` labels */
 const LEAD_STATUS_BY_NORMALIZED_UUID = new Map<string, LeadStatus>();
-for (const [uuid, label] of Object.entries(LEAD_STATUS_UUID_TO_LABEL)) {
+for (const [uuid, label] of Object.entries(leadStatusIds)) {
   LEAD_STATUS_BY_NORMALIZED_UUID.set(normalizeUuidString(uuid), label);
 }
 
@@ -154,4 +148,19 @@ export async function fetchLeadsFromSupabase(): Promise<Lead[]> {
 
   const rows = (data ?? []) as Record<string, unknown>[];
   return rows.map((row) => mapSupabaseLeadRow(row));
+}
+
+export async function updateLeadStatus(leadId: string, statusId: string): Promise<Lead> {
+  const { data, error } = await supabase
+    .from("leads")
+    .update({ lead_status_id: statusId })
+    .eq("id", leadId)
+    .select("*, status:lead_status_id ( id, value )")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return mapSupabaseLeadRow(data as Record<string, unknown>);
 }
