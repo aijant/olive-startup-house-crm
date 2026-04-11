@@ -20,6 +20,11 @@ import { Plus, Search, Filter, TrendingUp, Users, Target, CheckCircle, AlertCirc
 import { useState } from "react";
 import type { Lead } from "@shared/schema";
 
+/** Qualified (payment button enabled) + legacy DB Payment Pending rows. */
+function matchesPaymentPendingTab(lead: Lead): boolean {
+  return lead.status === "Qualified" || lead.status === "Payment Pending";
+}
+
 export default function LeadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
@@ -35,7 +40,11 @@ export default function LeadsPage() {
     const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSource = sourceFilter === "all" || lead.source === sourceFilter;
-    const matchesStatus = statusTab === "all" || lead.status === statusTab;
+    const matchesStatus =
+      statusTab === "all" ||
+      (statusTab === "Payment Pending"
+        ? matchesPaymentPendingTab(lead)
+        : lead.status === statusTab);
     return matchesSearch && matchesSource && matchesStatus;
   });
 
@@ -44,6 +53,7 @@ export default function LeadsPage() {
     New: leads?.filter(l => l.status === "New").length || 0,
     Contacted: leads?.filter(l => l.status === "Contacted").length || 0,
     Qualified: leads?.filter(l => l.status === "Qualified").length || 0,
+    "Payment Pending": leads?.filter(matchesPaymentPendingTab).length || 0,
     Converted: leads?.filter(l => l.status === "Converted").length || 0,
   };
 
@@ -182,6 +192,12 @@ export default function LeadsPage() {
                 </TabsTrigger>
                 <TabsTrigger value="Qualified">
                   Qualified <Badge variant="secondary" className="ml-2">{leadsByStatus.Qualified}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="Payment Pending">
+                  Payment Pending{" "}
+                  <Badge variant="secondary" className="ml-2">
+                    {leadsByStatus["Payment Pending"]}
+                  </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="Converted">
                   Converted <Badge variant="secondary" className="ml-2">{leadsByStatus.Converted}</Badge>
