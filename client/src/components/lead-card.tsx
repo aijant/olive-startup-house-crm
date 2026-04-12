@@ -48,6 +48,8 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
   });
 
   const convertedId = getLeadStatusId("Converted");
+  const hidePaymentPendingAction =
+    lead.status === "Converted" || lead.status === "Lost";
   const canClickPaymentPending =
     (lead.status === "Qualified" || lead.status === "Payment Pending") &&
     Boolean(convertedId);
@@ -113,35 +115,37 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
         </div>
       </div>
 
-      <div
-        className="flex shrink-0 gap-1 justify-end"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Button
-          type="button"
-          variant={
-            canClickPaymentPending && !updateStatusMutation.isPending
-              ? "default"
-              : "outline"
-          }
-          size="sm"
-          className="text-xs h-8 gap-1"
-          disabled={!canClickPaymentPending || updateStatusMutation.isPending}
-          onClick={() => {
-            if (!convertedId) return;
-            updateStatusMutation.mutate({
-              leadId: lead.id,
-              statusId: convertedId,
-            });
-          }}
+      {!hidePaymentPendingAction ? (
+        <div
+          className="flex shrink-0 gap-1 justify-end"
+          onClick={(e) => e.stopPropagation()}
         >
-          {updateStatusMutation.isPending &&
-          updateStatusMutation.variables?.statusId === convertedId ? (
-            <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-          ) : null}
-          Payment pending
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant={
+              canClickPaymentPending && !updateStatusMutation.isPending
+                ? "default"
+                : "outline"
+            }
+            size="sm"
+            className="text-xs h-8 gap-1"
+            disabled={!canClickPaymentPending || updateStatusMutation.isPending}
+            onClick={() => {
+              if (!convertedId) return;
+              updateStatusMutation.mutate({
+                leadId: lead.id,
+                statusId: convertedId,
+              });
+            }}
+          >
+            {updateStatusMutation.isPending &&
+            updateStatusMutation.variables?.statusId === convertedId ? (
+              <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+            ) : null}
+            Payment pending
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
