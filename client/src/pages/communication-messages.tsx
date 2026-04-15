@@ -12,6 +12,11 @@ import {
   sendEmailMessage,
 } from "@/actions/communications";
 import { fetchLeadByIdFromSupabase } from "@/lib/leads-supabase";
+import {
+  bodyContainsInvoiceLink,
+  fetchInvoiceLinks,
+  INVOICE_LINKS_QUERY_KEY,
+} from "@/lib/invoice-links-supabase";
 import { getLeadStatusBadgeClass } from "@/lib/lead-status-badge-classes";
 import { getCommunityDocuments, getClientDocuments } from "@/actions/community";
 import { communicationChannels, communicationStatuses } from "@shared/schema";
@@ -94,26 +99,6 @@ const VIDEO_TOUR_OPTIONS = [
     id: "tour-2",
     label: "San Francisco",
     url: "https://www.youtube.com/watch?v=hKF2s49awQA",
-  },
-] as const;
-
-/** Appended from Quick actions → Invoices & payment → Invoice */
-const INVOICE_MESSAGE_SNIPPET =
-  "If you need a copy of your invoice or have billing questions, reply to this thread and we will help.";
-
-const ZELLE_PAYMENT_URL =
-  "https://enroll.zellepay.com/qr-codes/?data=eyJuYW1lIjoiT0xJVkUgUk9PTVMsIElOQy4iLCJ0b2tlbiI6ImFha2VsZWV2QGhvdG1haWwuY29tIiwiYWN0aW9uIjoicGF5bWVudCJ9";
-
-// TODO: Replace with your real QuickBooks / Intuit payment link when available.
-const QUICKBOOKS_PAYMENT_URL_PLACEHOLDER =
-  "https://example.com/quickbooks-payment-placeholder";
-
-const INVOICE_PAYMENT_OPTIONS = [
-  { id: "zelle", label: "Zelle", content: ZELLE_PAYMENT_URL },
-  {
-    id: "quickbooks",
-    label: "QuickBooks",
-    content: QUICKBOOKS_PAYMENT_URL_PLACEHOLDER,
   },
 ] as const;
 
@@ -698,6 +683,16 @@ export default function CommunicationMessagesPage() {
     enabled: Boolean(communicationId && leadId),
   });
 
+  const {
+    data: invoiceLinks,
+    isLoading: invoiceLinksLoading,
+    isError: invoiceLinksError,
+  } = useQuery({
+    queryKey: INVOICE_LINKS_QUERY_KEY,
+    queryFn: fetchInvoiceLinks,
+    staleTime: 60_000,
+  });
+
   const sortedMessages = [...messages].sort(
     (a, b) =>
       new Date(a.received_at).getTime() - new Date(b.received_at).getTime(),
@@ -1011,8 +1006,9 @@ export default function CommunicationMessagesPage() {
       selectedDocumentIds,
       documentTitlesById,
     );
-    const isInvoice = INVOICE_PAYMENT_OPTIONS.some((opt) =>
-      bodyWithAttachments.includes(opt.content),
+    const isInvoice = bodyContainsInvoiceLink(
+      bodyWithAttachments,
+      invoiceLinks ?? [],
     );
     const payload: {
       communication_id: string;
@@ -1231,7 +1227,7 @@ export default function CommunicationMessagesPage() {
                     <div className="flex min-w-0 flex-1 flex-col items-start gap-0 text-left">
                       <span>Invoices</span>
                       <span className="text-xs font-normal text-muted-foreground">
-                        Zelle, QuickBooks
+                        Payment methods
                       </span>
                     </div>
                   </DropdownMenuSubTrigger>
@@ -1240,26 +1236,40 @@ export default function CommunicationMessagesPage() {
                     alignOffset={isMobile ? 0 : -4}
                     className="min-w-[12rem]"
                   >
-                    {INVOICE_PAYMENT_OPTIONS.map((opt) => (
-                      <DropdownMenuItem
-                        key={opt.id}
-                        onSelect={() => {
-                          setBody((prev) =>
-                            appendParagraphToBody(prev, opt.content),
-                          );
-                          toast({
-                            title: "Added to message",
-                            description:
-                              "The text or link was added to your message only (not opened in the browser).",
-                          });
-                          queueMicrotask(() => {
-                            composeBodyRef.current?.focus();
-                          });
-                        }}
-                      >
-                        {opt.label}
-                      </DropdownMenuItem>
-                    ))}
+                    {invoiceLinksLoading ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        Loading…
+                      </div>
+                    ) : invoiceLinksError ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        Could not load payment links
+                      </div>
+                    ) : (invoiceLinks ?? []).length === 0 ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        No payment methods
+                      </div>
+                    ) : (
+                      (invoiceLinks ?? []).map((opt) => (
+                        <DropdownMenuItem
+                          key={opt.id}
+                          onSelect={() => {
+                            setBody((prev) =>
+                              appendParagraphToBody(prev, opt.url),
+                            );
+                            toast({
+                              title: "Added to message",
+                              description:
+                                "The text or link was added to your message only (not opened in the browser).",
+                            });
+                            queueMicrotask(() => {
+                              composeBodyRef.current?.focus();
+                            });
+                          }}
+                        >
+                          {opt.label}
+                        </DropdownMenuItem>
+                      ))
+                    )}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
               </DropdownMenuContent>
