@@ -34,7 +34,7 @@ export function LeadsMobileStack({ leads }: LeadsMobileStackProps) {
       {leads.map((lead) => (
         <div
           key={lead.id}
-          className="rounded-lg border bg-card p-3 space-y-2.5 text-center min-w-0 max-w-full overflow-x-hidden"
+          className="rounded-lg border bg-muted/50 dark:bg-muted/35 p-3 space-y-2.5 text-center min-w-0 max-w-full overflow-x-hidden"
           data-testid={`lead-mobile-card-${lead.id}`}
         >
           <div className="min-w-0 w-full flex justify-center">
