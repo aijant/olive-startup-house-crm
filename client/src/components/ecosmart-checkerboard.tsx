@@ -25,6 +25,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import {
@@ -251,10 +252,31 @@ export function EcoSmartCheckerboard() {
     };
   }, [view, numDays]);
 
+  const locationTabTriggerClassName = cn(
+    "rounded-md border border-transparent bg-transparent px-3 py-2 text-sm text-muted-foreground shadow-none ring-offset-background transition-colors",
+    "data-[state=active]:border-primary data-[state=active]:bg-background data-[state=active]:font-semibold data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+  );
+
   return (
     <Card className="border-border">
       <CardContent className="p-0">
         <div className="flex flex-col gap-3 overflow-hidden rounded-t-xl p-4 border-b border-border bg-muted/20">
+          <div className="flex w-full justify-start">
+            <Tabs
+              value={location}
+              onValueChange={(v) => v && setLocation(v as CheckerboardLocation)}
+            >
+              <TabsList className="h-auto w-fit justify-start gap-2 bg-transparent p-0 text-muted-foreground">
+                <TabsTrigger value="mp" className={locationTabTriggerClassName}>
+                  Menlo Park
+                </TabsTrigger>
+                <TabsTrigger value="pa" className={locationTabTriggerClassName}>
+                  Palo Alto
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-1">
               <Button
@@ -291,41 +313,24 @@ export function EcoSmartCheckerboard() {
               </Button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <ToggleGroup
-                type="single"
-                value={view}
-                onValueChange={(v) => v && setView(v as ViewMode)}
-                variant="outline"
-                size="sm"
-                className="justify-end"
-              >
-                <ToggleGroupItem value="week" aria-label="Week view">
-                  WEEK
-                </ToggleGroupItem>
-                <ToggleGroupItem value="month" aria-label="Month view">
-                  MONTH
-                </ToggleGroupItem>
-                <ToggleGroupItem value="3month" aria-label="Three month view">
-                  3 MONTHS
-                </ToggleGroupItem>
-              </ToggleGroup>
-
-              <ToggleGroup
-                type="single"
-                value={location}
-                onValueChange={(v) => v && setLocation(v as CheckerboardLocation)}
-                variant="outline"
-                size="sm"
-              >
-                <ToggleGroupItem value="mp" aria-label="Menlo Park">
-                  MP
-                </ToggleGroupItem>
-                <ToggleGroupItem value="pa" aria-label="Palo Alto">
-                  PA
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
+            <ToggleGroup
+              type="single"
+              value={view}
+              onValueChange={(v) => v && setView(v as ViewMode)}
+              variant="outline"
+              size="sm"
+              className="justify-end"
+            >
+              <ToggleGroupItem value="week" aria-label="Week view">
+                WEEK
+              </ToggleGroupItem>
+              <ToggleGroupItem value="month" aria-label="Month view">
+                MONTH
+              </ToggleGroupItem>
+              <ToggleGroupItem value="3month" aria-label="Three month view">
+                3 MONTHS
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
         </div>
 

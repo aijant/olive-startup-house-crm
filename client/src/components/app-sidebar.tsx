@@ -28,6 +28,11 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+
+/** Brighter accent for primary “live” nav items (Lead Pipeline, Communication, EcoSmart, Community Hub). */
+const navHighlightButtonClass =
+  "font-semibold text-primary bg-primary/5 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-primary/15 data-[active=true]:text-primary data-[active=true]:[&>svg]:text-primary";
 
 const mainNavItems = [
   {
@@ -40,7 +45,7 @@ const mainNavItems = [
     title: "Lead Pipeline",
     url: "/leads",
     icon: Users,
-    highlight: false,
+    highlight: true,
   },
   {
     title: "Communication",
@@ -79,7 +84,7 @@ const operationsItems = [
     title: "Community Hub",
     url: "/community",
     icon: Users,
-    highlight: false,
+    highlight: true,
   },
   {
     title: "Financial Reports",
@@ -138,10 +143,10 @@ export function AppSidebar() {
                     asChild
                     isActive={location === item.url}
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-                    className={item.highlight ? "font-semibold text-primary" : ""}
+                    className={item.highlight ? navHighlightButtonClass : ""}
                   >
                     <Link href={item.url}>
-                      <item.icon className={`h-4 w-4${item.highlight ? " text-primary" : ""}`} />
+                      <item.icon className={cn("h-4 w-4", item.highlight && "text-primary")} />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -161,13 +166,13 @@ export function AppSidebar() {
                     asChild
                     isActive={location === item.url}
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-                    className={item.highlight ? "font-semibold text-primary" : ""}
+                    className={item.highlight ? navHighlightButtonClass : ""}
                   >
                     <Link
                       href={item.url}
                       onClick={item.url === "/ecosmart" ? closeSidebar : undefined}
                     >
-                      <item.icon className={`h-4 w-4${item.highlight ? " text-primary" : ""}`} />
+                      <item.icon className={cn("h-4 w-4", item.highlight && "text-primary")} />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
