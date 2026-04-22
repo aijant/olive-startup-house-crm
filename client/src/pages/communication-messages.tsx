@@ -14,7 +14,8 @@ import {
   getCommunicationMessages,
   sendEmailMessage,
 } from "@/actions/communications";
-import { fetchLeadByIdFromSupabase } from "@/lib/leads-supabase";
+import { qualifyLead } from "@/actions/leads";
+import { fetchLeadByIdFromSupabase, LEADS_QUERY_KEY } from "@/lib/leads-supabase";
 import {
   bodyContainsInvoiceLink,
   fetchInvoiceLinks,
@@ -66,7 +67,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   ArrowLeft,
+  BadgeCheck,
   Calendar,
   ChevronDown,
   ChevronLeft,
@@ -1034,6 +1041,32 @@ export default function CommunicationMessagesPage() {
     },
   });
 
+  const qualifyLeadMutation = useMutation({
+    mutationFn: () => {
+      if (!leadId) throw new Error("No lead linked to this thread.");
+      return qualifyLead(leadId);
+    },
+    onSuccess: async () => {
+      if (communicationId && leadId) {
+        await queryClient.invalidateQueries({
+          queryKey: ["communication-lead", communicationId, leadId],
+        });
+      }
+      await queryClient.invalidateQueries({ queryKey: LEADS_QUERY_KEY });
+      toast({
+        title: "Payment confirmed",
+        description: "Lead status has been updated.",
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Could not confirm payment",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   function handleSubmitInPersonTour(e: React.FormEvent) {
     e.preventDefault();
     if (!communicationId) return;
@@ -1415,6 +1448,52 @@ export default function CommunicationMessagesPage() {
                     )}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
+                {leadId ? (
+                  <DropdownMenuItem
+                    className="h-auto cursor-pointer flex-col items-stretch gap-0 py-2"
+                    disabled={qualifyLeadMutation.isPending}
+                    onSelect={() => {
+                      qualifyLeadMutation.mutate();
+                    }}
+                  >
+                    <div className="flex items-start gap-2">
+                      {qualifyLeadMutation.isPending ? (
+                        <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+                      ) : (
+                        <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                      )}
+                      <div className="flex min-w-0 flex-col items-start gap-0">
+                        <span>Confirm payment</span>
+                        <span className="text-xs text-muted-foreground">
+                          Update lead after payment
+                        </span>
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                ) : (
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem
+                        className="h-auto flex-col items-stretch gap-0 py-2 cursor-not-allowed opacity-50"
+                        onSelect={(e) => e.preventDefault()}
+                        aria-disabled
+                      >
+                        <div className="flex items-start gap-2">
+                          <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div className="flex min-w-0 flex-col items-start gap-0">
+                            <span>Confirm payment</span>
+                            <span className="text-xs text-muted-foreground">
+                              Update lead after payment
+                            </span>
+                          </div>
+                        </div>
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      Convert to a lead first (use &quot;Made to lead&quot;).
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
