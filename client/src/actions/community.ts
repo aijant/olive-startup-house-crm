@@ -36,13 +36,23 @@ export type AddCommunityProfileForLeadPayload = {
   full_name: string;
   email: string;
   linkedin_url: string;
-  lead_id: string;
+  lead_id?: string;
 };
 
-export const addCommunityProfileForLead = (body: AddCommunityProfileForLeadPayload) =>
+export const addCommunityProfileForLead = ({
+  full_name,
+  email,
+  linkedin_url,
+  lead_id,
+}: AddCommunityProfileForLeadPayload) =>
   apiFetch<Record<string, unknown>>("community_add_profile", {
     method: "POST",
-    body,
+    body: {
+      full_name,
+      email,
+      linkedin_url,
+      ...(lead_id?.trim() ? { lead_id: lead_id.trim() } : {}),
+    },
   });
 
 export const deleteCommunityProfile = (profileId: string) =>
