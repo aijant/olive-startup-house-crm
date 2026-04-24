@@ -1,5 +1,4 @@
 import { apiFetch } from "@/lib/api";
-import { isDevCommsDeleteEnabled } from "@/lib/dev-comms-delete";
 import type {
   Communication,
   CommunicationMessagesResponse,
@@ -96,20 +95,3 @@ export const createGuestInvite = (payload: CreateGuestInvitePayload) =>
     method: "POST",
     body: payload,
   });
-
-/** Dev cleanup: remove all communication records for a mailbox in Communication Center. */
-export function deleteAllCommunicationsByEmail(email: string) {
-  if (!isDevCommsDeleteEnabled()) {
-    return Promise.reject(
-      new Error("Delete communications is only available in development builds."),
-    );
-  }
-  const normalized = email.trim();
-  if (!normalized) {
-    return Promise.reject(new Error("Email is required"));
-  }
-  return apiFetch<Record<string, unknown>>("dev-delete-all-communications-by-email", {
-    method: "POST",
-    body: { email: normalized },
-  });
-}
