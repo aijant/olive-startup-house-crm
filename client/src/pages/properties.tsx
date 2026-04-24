@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
+import { isDevCommsDeleteEnabled } from "@/lib/dev-comms-delete";
 import {
   COMMUNICATION_TOTALS_QUERY_KEY,
   deleteAllCommunicationsByEmail,
@@ -93,7 +94,7 @@ export default function PropertiesPage() {
             <Plus className="h-4 w-4 mr-2" />
             Add Property
           </Button>
-          {canViewCommunityAdminProfiles && (
+          {canViewCommunityAdminProfiles && isDevCommsDeleteEnabled() && (
             <Button
               type="button"
               data-testid="button-delete-communications"
@@ -166,61 +167,63 @@ export default function PropertiesPage() {
         )}
       </div>
 
-      <Dialog
-        open={deleteCommsOpen}
-        onOpenChange={(open) => {
-          if (!open) closeDeleteCommsDialog();
-        }}
-      >
-        <DialogContent
-          className="sm:max-w-md"
-          onPointerDownOutside={(e) => {
-            if (deletingComms) e.preventDefault();
-          }}
-          onEscapeKeyDown={(e) => {
-            if (deletingComms) e.preventDefault();
+      {isDevCommsDeleteEnabled() && (
+        <Dialog
+          open={deleteCommsOpen}
+          onOpenChange={(open) => {
+            if (!open) closeDeleteCommsDialog();
           }}
         >
-          <DialogHeader>
-            <DialogTitle>Delete communications by email</DialogTitle>
-            <DialogDescription>
-              This removes Communication Center data for the address you enter. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-2">
-            <Label htmlFor="delete-comms-email">Email</Label>
-            <Input
-              id="delete-comms-email"
-              type="email"
-              autoComplete="email"
-              placeholder="name@gmail.com"
-              value={deleteCommsEmail}
-              onChange={(e) => setDeleteCommsEmail(e.target.value)}
-              disabled={deletingComms}
-            />
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDeleteCommsDialog} disabled={deletingComms}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => void submitDeleteComms()}
-              disabled={deletingComms}
-            >
-              {deletingComms ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting…
-                </>
-              ) : (
-                "Delete"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <DialogContent
+            className="sm:max-w-md"
+            onPointerDownOutside={(e) => {
+              if (deletingComms) e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              if (deletingComms) e.preventDefault();
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>Delete communications by email</DialogTitle>
+              <DialogDescription>
+                This removes Communication Center data for the address you enter. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 py-2">
+              <Label htmlFor="delete-comms-email">Email</Label>
+              <Input
+                id="delete-comms-email"
+                type="email"
+                autoComplete="email"
+                placeholder="name@gmail.com"
+                value={deleteCommsEmail}
+                onChange={(e) => setDeleteCommsEmail(e.target.value)}
+                disabled={deletingComms}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={closeDeleteCommsDialog} disabled={deletingComms}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => void submitDeleteComms()}
+                disabled={deletingComms}
+              >
+                {deletingComms ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Deleting…
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
