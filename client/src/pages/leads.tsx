@@ -137,7 +137,7 @@ export default function LeadsPage() {
   }, [leads]);
 
   return (
-    <div className="p-6 space-y-6 max-w-[1400px] mx-auto min-w-0 w-full">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1400px] mx-auto min-w-0 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -145,7 +145,7 @@ export default function LeadsPage() {
           <p className="text-muted-foreground">Manage and track all incoming leads from various sources</p>
         </div>
         <AddLeadDialog>
-          <Button type="button" data-testid="button-add-lead">
+          <Button type="button" className="w-full sm:w-auto" data-testid="button-add-lead">
             <Plus className="h-4 w-4 mr-2" />
             Add New Lead
           </Button>
@@ -163,55 +163,55 @@ export default function LeadsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-md bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="min-w-0 overflow-hidden">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <div className="shrink-0 rounded-md bg-primary/10 p-1.5 sm:p-2">
+                <Users className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{leads?.length || 0}</p>
-                <p className="text-sm text-muted-foreground">Total Leads</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900/30">
-                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{newThisWeekCount}</p>
-                <p className="text-sm text-muted-foreground">New This Week</p>
+              <div className="min-w-0 overflow-hidden">
+                <p className="text-xl font-bold sm:text-2xl">{leads?.length || 0}</p>
+                <p className="truncate text-xs text-muted-foreground sm:text-sm">Total Leads</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-md bg-amber-100 dark:bg-amber-900/30">
-                <Target className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+        <Card className="min-w-0 overflow-hidden">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <div className="shrink-0 rounded-md bg-blue-100 p-1.5 dark:bg-blue-900/30 sm:p-2">
+                <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400 sm:h-5 sm:w-5" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{leadsByStatus.Qualified}</p>
-                <p className="text-sm text-muted-foreground">Qualified</p>
+              <div className="min-w-0 overflow-hidden">
+                <p className="text-xl font-bold sm:text-2xl">{newThisWeekCount}</p>
+                <p className="truncate text-xs text-muted-foreground sm:text-sm">New This Week</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-md bg-emerald-100 dark:bg-emerald-900/30">
-                <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+        <Card className="min-w-0 overflow-hidden">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <div className="shrink-0 rounded-md bg-amber-100 p-1.5 dark:bg-amber-900/30 sm:p-2">
+                <Target className="h-4 w-4 text-amber-600 dark:text-amber-400 sm:h-5 sm:w-5" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{leadsByStatus.Converted}</p>
-                <p className="text-sm text-muted-foreground">Converted</p>
+              <div className="min-w-0 overflow-hidden">
+                <p className="text-xl font-bold sm:text-2xl">{leadsByStatus.Qualified}</p>
+                <p className="truncate text-xs text-muted-foreground sm:text-sm">Qualified</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="min-w-0 overflow-hidden">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <div className="shrink-0 rounded-md bg-emerald-100 p-1.5 dark:bg-emerald-900/30 sm:p-2">
+                <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 sm:h-5 sm:w-5" />
+              </div>
+              <div className="min-w-0 overflow-hidden">
+                <p className="text-xl font-bold sm:text-2xl">{leadsByStatus.Converted}</p>
+                <p className="truncate text-xs text-muted-foreground sm:text-sm">Converted</p>
               </div>
             </div>
           </CardContent>
