@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogFooter,
@@ -22,6 +29,7 @@ const emptyLeadForm = {
   email: "",
   phone: "",
   location: "",
+  source: "Referral",
   message_text: "",
 };
 
@@ -37,6 +45,7 @@ export function AddLeadDialog({ children }: AddLeadDialogProps) {
   const emailId = `${baseId}-email`;
   const phoneId = `${baseId}-phone`;
   const locationId = `${baseId}-location`;
+  const sourceId = `${baseId}-source`;
   const messageId = `${baseId}-message`;
 
   const [open, setOpen] = useState(false);
@@ -74,6 +83,7 @@ export function AddLeadDialog({ children }: AddLeadDialogProps) {
       email: leadForm.email,
       phone: leadForm.phone,
       location: leadForm.location,
+      source: leadForm.source,
       message_text: leadForm.message_text,
     };
     const parsed = createLeadBodySchema.safeParse(body);
@@ -135,6 +145,22 @@ export function AddLeadDialog({ children }: AddLeadDialogProps) {
               autoComplete="street-address"
               disabled={createLeadMutation.isPending}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={sourceId}>Source</Label>
+            <Select
+              value={leadForm.source}
+              onValueChange={(source) => setLeadForm((f) => ({ ...f, source }))}
+              disabled={createLeadMutation.isPending}
+            >
+              <SelectTrigger id={sourceId} data-testid="select-lead-source">
+                <SelectValue placeholder="Select source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Referral">Referral</SelectItem>
+                <SelectItem value="Contacted">Contacted</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor={messageId}>Message</Label>

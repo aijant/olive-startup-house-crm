@@ -78,6 +78,11 @@ export function LeadsMobileStack({ leads }: LeadsMobileStackProps) {
                 breakTokens
               />
             </LabeledRow>
+            <LabeledRow label="Source">
+              <Badge variant="outline" className="text-xs font-normal leading-tight">
+                {lead.source}
+              </Badge>
+            </LabeledRow>
             <LabeledRow label="Message">
               <TruncatedCell
                 compact

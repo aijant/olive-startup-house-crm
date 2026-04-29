@@ -14,7 +14,7 @@ export type User = {
 };
 
 // Lead Sources
-export const leadSources = ["Instagram", "Website", "Booking.com", "Airbnb", "Referral", "WOM", "OTA"] as const;
+export const leadSources = ["Instagram", "Website", "Booking.com", "Airbnb", "Referral", "Contacted", "WOM", "OTA"] as const;
 export type LeadSource = typeof leadSources[number];
 
 // Lead Status
