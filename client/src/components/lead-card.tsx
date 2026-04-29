@@ -14,14 +14,10 @@ interface LeadCardProps {
 }
 
 const sourceIcons: Record<string, string> = {
-  Instagram: "📍",
   Website: "📍",
-  "Booking.com": "📍",
-  Airbnb: "📍",
+  Email: "📍",
   Referral: "📍",
   Contacted: "📍",
-  WOM: "📍",
-  OTA: "📍",
 };
 
 export function LeadCard({ lead, onClick }: LeadCardProps) {

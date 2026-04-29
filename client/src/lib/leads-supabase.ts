@@ -1,8 +1,11 @@
 import { supabase } from "@/lib/supabase";
 import {
+  createdFromIds,
   leadSources,
+  leadSourceByCreatedFromId,
   leadStatuses,
   leadStatusIds,
+  type CreatedFromId,
   type Lead,
   type LeadSource,
   type LeadStatus,
@@ -12,6 +15,8 @@ export const LEADS_QUERY_KEY = ["leads"] as const;
 
 const DEFAULT_SOURCE: LeadSource = "Website";
 const DEFAULT_STATUS: LeadStatus = "New";
+const LEADS_SELECT =
+  "*, created_from_type:created_from_id ( id, value ), status:lead_status_id ( id, value ), channel:channel_id ( id, value )";
 
 function normalizeUuidString(s: string): string {
   return s.trim().toLowerCase();
@@ -54,6 +59,13 @@ function extractStatusCandidate(row: Record<string, unknown>): unknown {
 
 function isLeadSource(value: unknown): value is LeadSource {
   return typeof value === "string" && (leadSources as readonly string[]).includes(value);
+}
+
+function isCreatedFromId(value: unknown): value is CreatedFromId {
+  return (
+    typeof value === "string" &&
+    Object.prototype.hasOwnProperty.call(leadSourceByCreatedFromId, value)
+  );
 }
 
 function isLeadStatus(value: unknown): value is LeadStatus {
@@ -99,12 +111,48 @@ function pickCreatedAt(row: Record<string, unknown>): string {
   return new Date().toISOString();
 }
 
+function extractCreatedFromTypeValue(row: Record<string, unknown>): unknown {
+  const createdFromType = row.created_from_type ?? row.createdFromType;
+  if (typeof createdFromType === "string") return createdFromType;
+  if (
+    createdFromType !== null &&
+    typeof createdFromType === "object" &&
+    !Array.isArray(createdFromType)
+  ) {
+    const o = createdFromType as Record<string, unknown>;
+    if (typeof o.value === "string" && o.value !== "") return o.value;
+  }
+  return undefined;
+}
+
+function resolveLeadSource(row: Record<string, unknown>): LeadSource {
+  const fromRelation = extractCreatedFromTypeValue(row);
+  if (isLeadSource(fromRelation)) return fromRelation;
+
+  const createdFromId = pickString(row, "created_from_id", "createdFromId");
+  if (isCreatedFromId(createdFromId)) {
+    return leadSourceByCreatedFromId[createdFromId];
+  }
+
+  const legacySource = pickString(row, "source");
+  if (isLeadSource(legacySource)) return legacySource;
+
+  return DEFAULT_SOURCE;
+}
+
+function resolveCreatedFromId(
+  row: Record<string, unknown>,
+  source: LeadSource,
+): CreatedFromId | undefined {
+  const createdFromId = pickString(row, "created_from_id", "createdFromId");
+  if (isCreatedFromId(createdFromId)) return createdFromId;
+  return createdFromIds[source];
+}
+
 export function mapSupabaseLeadRow(row: Record<string, unknown>): Lead {
   const name = pickString(row, "name") ?? "Unknown";
   const email = pickString(row, "email") ?? "";
-
-  const sourceRaw = row.source;
-  const source: LeadSource = isLeadSource(sourceRaw) ? sourceRaw : DEFAULT_SOURCE;
+  const source = resolveLeadSource(row);
 
   const status = resolveLeadStatus(extractStatusCandidate(row));
 
@@ -115,6 +163,7 @@ export function mapSupabaseLeadRow(row: Record<string, unknown>): Lead {
     phone: pickString(row, "phone"),
     location: pickString(row, "location"),
     message_text: pickString(row, "message_text", "message"),
+    created_from_id: resolveCreatedFromId(row, source),
     source,
     status,
     budget: pickNumber(row, "budget"),
@@ -128,7 +177,7 @@ export function mapSupabaseLeadRow(row: Record<string, unknown>): Lead {
 export async function fetchLeadByIdFromSupabase(leadId: string): Promise<Lead> {
   const { data, error } = await supabase
     .from("leads")
-    .select("*, status:lead_status_id ( id, value ), channel:channel_id ( id, value )")
+    .select(LEADS_SELECT)
     .eq("id", leadId)
     .single();
 
@@ -139,11 +188,17 @@ export async function fetchLeadByIdFromSupabase(leadId: string): Promise<Lead> {
   return mapSupabaseLeadRow(data as Record<string, unknown>);
 }
 
-export async function fetchLeadsFromSupabase(): Promise<Lead[]> {
-  const { data, error } = await supabase
+export async function fetchLeadsFromSupabase(createdFromId?: string): Promise<Lead[]> {
+  let query = supabase
     .from("leads")
-    .select("*")
+    .select(LEADS_SELECT)
     .order("created_at", { ascending: false });
+
+  if (isCreatedFromId(createdFromId)) {
+    query = query.eq("created_from_id", createdFromId);
+  }
+
+  const { data, error } = await query;
   
   if (error) {
     throw new Error(error.message);
@@ -158,7 +213,7 @@ export async function updateLeadStatus(leadId: string, statusId: string): Promis
     .from("leads")
     .update({ lead_status_id: statusId })
     .eq("id", leadId)
-    .select("*, status:lead_status_id ( id, value )")
+    .select(LEADS_SELECT)
     .single();
 
   if (error) {

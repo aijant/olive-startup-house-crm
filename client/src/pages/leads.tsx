@@ -31,6 +31,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { createdFromIds } from "@shared/schema";
 import type { Lead } from "@shared/schema";
 
 const LEADS_PAGE_SIZE = 20;
@@ -67,8 +68,9 @@ export default function LeadsPage() {
   const [page, setPage] = useState(1);
 
   const { data: leads, isLoading, isError, error } = useQuery<Lead[]>({
-    queryKey: LEADS_QUERY_KEY,
-    queryFn: fetchLeadsFromSupabase,
+    queryKey: [...LEADS_QUERY_KEY, sourceFilter],
+    queryFn: () =>
+      fetchLeadsFromSupabase(sourceFilter === "all" ? undefined : sourceFilter),
     staleTime: 60_000,
   });
 
@@ -88,7 +90,7 @@ export default function LeadsPage() {
           .toLowerCase();
         const matchesSearch = hay.includes(q);
         const matchesSource =
-          sourceFilter === "all" || lead.source === sourceFilter;
+          sourceFilter === "all" || lead.created_from_id === sourceFilter;
         const matchesStatus =
           statusTab === "all" ||
           (statusTab === "Payment Pending"
@@ -239,14 +241,10 @@ export default function LeadsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sources</SelectItem>
-                <SelectItem value="Instagram">Instagram</SelectItem>
-                <SelectItem value="Website">Website</SelectItem>
-                <SelectItem value="Booking.com">Booking.com</SelectItem>
-                <SelectItem value="Airbnb">Airbnb</SelectItem>
-                <SelectItem value="Referral">Referral</SelectItem>
-                <SelectItem value="Contacted">Contacted</SelectItem>
-                <SelectItem value="WOM">Word of Mouth</SelectItem>
-                <SelectItem value="OTA">OTA</SelectItem>
+                <SelectItem value={createdFromIds.Website}>Website</SelectItem>
+                <SelectItem value={createdFromIds.Email}>Email</SelectItem>
+                <SelectItem value={createdFromIds.Referral}>Referral</SelectItem>
+                <SelectItem value={createdFromIds.Contacted}>Contacted</SelectItem>
               </SelectContent>
             </Select>
           </div>
