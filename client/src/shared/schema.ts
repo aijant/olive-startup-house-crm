@@ -408,8 +408,14 @@ export interface CommunityDocumentsPagination {
 /** Pagination metadata from get_community_profiles edge function (same shape as documents) */
 export type CommunityProfilesPagination = CommunityDocumentsPagination;
 
-/** Who the material is for: community-wide vs client-specific */
-export type CommunityDocumentAudience = "common" | "client";
+/** Who the material is for: community-wide, client-specific, or manager-only internal docs. */
+export type CommunityDocumentAudience = "common" | "client" | "internal";
+
+export interface InternalDocumentManager {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+}
 
 // Community Document
 export interface CommunityDocument {
@@ -424,8 +430,12 @@ export interface CommunityDocument {
   type?: { id: string; value: MaterialTypeValue };
   url?: string;
   link?: string | null;
-  /** Storage object key for non-link materials: `community-documents` when common, `client-documents` when doc_type is client */
+  /** Storage object key for non-link materials: bucket is selected from doc_type. */
   file_path?: string | null;
+  /** Manager IDs allowed to access internal documents. */
+  assigned_manager_ids?: string[];
+  /** Optional expanded manager records for admin assignment UI. */
+  assigned_managers?: InternalDocumentManager[];
   created_at?: string;
 }
 

@@ -32,6 +32,14 @@ export function useUserRole() {
 
   const role = query.data?.role ?? null;
   const canViewCommunityAdminProfiles = role === "admin" || role === "manager";
+  const canViewInternalDocuments = role === "admin" || role === "manager";
+  const canAssignInternalDocuments = role === "admin";
 
-  return { ...query, role, canViewCommunityAdminProfiles };
+  return {
+    ...query,
+    role,
+    canViewCommunityAdminProfiles,
+    canViewInternalDocuments,
+    canAssignInternalDocuments,
+  };
 }
