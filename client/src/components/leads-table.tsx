@@ -15,6 +15,21 @@ import type { Lead } from "@shared/schema";
 import { LEAD_STATUS_BADGE_CLASSES } from "@/lib/lead-status-badge-classes";
 import { MessageSquare } from "lucide-react";
 
+const LEAD_SOURCE_BADGE_CLASSES: Record<Lead["source"], string> = {
+  Website:
+    "border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  Email:
+    "border-violet-200 bg-violet-100 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300",
+  Referral:
+    "border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  Contacted:
+    "border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+};
+
+export function getLeadSourceBadgeClass(source: Lead["source"]) {
+  return LEAD_SOURCE_BADGE_CLASSES[source];
+}
+
 export function formatLeadCreatedRelative(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
@@ -98,7 +113,13 @@ export function LeadsTable({ leads, variant = "page" }: LeadsTableProps) {
                 <TruncatedCell compact value={lead.location} alwaysTooltip />
               </TableCell>
               <TableCell className="whitespace-nowrap">
-                <Badge variant="outline" className="text-xs font-normal leading-tight">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-xs font-medium leading-tight",
+                    getLeadSourceBadgeClass(lead.source),
+                  )}
+                >
                   {lead.source}
                 </Badge>
               </TableCell>

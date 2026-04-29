@@ -14,8 +14,21 @@ export type User = {
 };
 
 // Lead Sources
-export const leadSources = ["Instagram", "Website", "Booking.com", "Airbnb", "Referral", "Contacted", "WOM", "OTA"] as const;
+export const leadSources = ["Website", "Email", "Referral", "Contacted"] as const;
 export type LeadSource = typeof leadSources[number];
+
+export const createdFromIds = {
+  Website: "6be4a8de-550d-46dc-8f6b-7e4e112426b6",
+  Email: "da08304e-28b2-48d1-8a4e-33226c906f14",
+  Referral: "a649c1cf-e2e4-46a6-9565-c6413c81aab3",
+  Contacted: "d2846fdd-b0a4-4088-8104-88ee8f576526",
+} as const satisfies Record<LeadSource, string>;
+
+export type CreatedFromId = (typeof createdFromIds)[LeadSource];
+
+export const leadSourceByCreatedFromId = Object.fromEntries(
+  Object.entries(createdFromIds).map(([source, id]) => [id, source]),
+) as Record<CreatedFromId, LeadSource>;
 
 // Lead Status
 export const leadStatuses = [
@@ -56,6 +69,7 @@ export interface Lead {
   phone?: string;
   location?: string;
   message_text?: string;
+  created_from_id?: CreatedFromId;
   source: LeadSource;
   status: LeadStatus;
   budget: number;
@@ -71,6 +85,12 @@ export const insertLeadSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional(),
   source: z.enum(leadSources),
+  created_from_id: z.enum([
+    createdFromIds.Website,
+    createdFromIds.Email,
+    createdFromIds.Referral,
+    createdFromIds.Contacted,
+  ]).optional(),
   status: z.enum(leadStatuses),
   budget: z.number().positive(),
   notes: z.string().optional(),

@@ -61,7 +61,7 @@ export default function Dashboard() {
 
   const { data: leads, isLoading: leadsLoading } = useQuery<Lead[]>({
     queryKey: LEADS_QUERY_KEY,
-    queryFn: fetchLeadsFromSupabase,
+    queryFn: () => fetchLeadsFromSupabase(),
     staleTime: 60_000,
   });
 

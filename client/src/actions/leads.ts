@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiFetch } from "@/lib/api";
-import { leadSources } from "@shared/schema";
+import { createdFromIds, leadSources } from "@shared/schema";
 
 function trimEmpty(s: string | undefined): string | undefined {
   if (s === undefined) return undefined;
@@ -42,6 +42,7 @@ export const createLeadBodySchema = z
     location: trimEmpty(data.location),
     message_text: trimEmpty(data.message_text),
     source: data.source,
+    created_from_id: createdFromIds[data.source],
   }));
 
 export type CreateLeadBody = z.infer<typeof createLeadBodySchema>;

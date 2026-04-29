@@ -3,7 +3,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TruncatedCell } from "@/components/truncated-cell";
 import { LeadPaymentPendingButton } from "@/components/lead-payment-pending-button";
 import { LeadCommunicationLink } from "@/components/lead-communication-link";
-import { LeadsTable, formatLeadCreatedRelative } from "@/components/leads-table";
+import {
+  LeadsTable,
+  formatLeadCreatedRelative,
+  getLeadSourceBadgeClass,
+} from "@/components/leads-table";
 import { getLeadStatusBadgeClass } from "@/lib/lead-status-badge-classes";
 import { cn } from "@/lib/utils";
 import type { Lead } from "@shared/schema";
@@ -79,7 +83,13 @@ export function LeadsMobileStack({ leads }: LeadsMobileStackProps) {
               />
             </LabeledRow>
             <LabeledRow label="Source">
-              <Badge variant="outline" className="text-xs font-normal leading-tight">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs font-medium leading-tight",
+                  getLeadSourceBadgeClass(lead.source),
+                )}
+              >
                 {lead.source}
               </Badge>
             </LabeledRow>
