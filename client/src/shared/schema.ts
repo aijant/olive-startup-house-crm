@@ -464,6 +464,54 @@ export type InsertProfile = z.infer<typeof insertProfileSchema>;
 export const appUserRoles = ["admin", "manager", "client"] as const;
 export type AppUserRole = (typeof appUserRoles)[number];
 
+/** User/role row managed from the Settings admin panel. */
+export interface AdminManager {
+  id: string;
+  email: string;
+  full_name?: string | null;
+  name?: string | null;
+  role: AppUserRole;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface AdminManagersResponse {
+  managers: AdminManager[];
+}
+
+/** Contract for `create_admin_manager`: backend should create/invite the user and set role = manager. */
+export interface CreateAdminManagerPayload {
+  email: string;
+  full_name?: string;
+}
+
+export interface DeleteAdminManagerPayload {
+  user_id: string;
+}
+
+/** Contract for admin role assignment, backed by `user_roles`. */
+export interface AssignAdminManagerRolePayload {
+  user_id: string;
+  role: "manager";
+}
+
+export type AdminFilterListKey = "keywords" | "statuses" | "recipients";
+
+export interface AdminFilterSettings {
+  keywords: string[];
+  statuses: string[];
+  recipients: string[];
+}
+
+export type AdminFilterSettingsResponse = AdminFilterSettings;
+
+/** Contract for `update_admin_filter_settings`: backend persists all lists atomically. */
+export type UpdateAdminFilterSettingsPayload = AdminFilterSettings;
+
+export interface AdminActionSuccessResponse {
+  success: true;
+}
+
 /** Communication thread → `community_add_profile` JSON (onboarding) */
 export const createCommunityAccountSchema = z.object({
   full_name: z.string().min(1, "Required"),
