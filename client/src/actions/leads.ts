@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { apiFetch } from "@/lib/api";
+import { leadSources } from "@shared/schema";
 
 function trimEmpty(s: string | undefined): string | undefined {
   if (s === undefined) return undefined;
@@ -14,6 +15,7 @@ export const createLeadBodySchema = z
     phone: z.string().optional(),
     location: z.string().optional(),
     message_text: z.string().optional(),
+    source: z.enum(leadSources),
   })
   .superRefine((data, ctx) => {
     const email = trimEmpty(data.email);
@@ -39,6 +41,7 @@ export const createLeadBodySchema = z
     phone: trimEmpty(data.phone),
     location: trimEmpty(data.location),
     message_text: trimEmpty(data.message_text),
+    source: data.source,
   }));
 
 export type CreateLeadBody = z.infer<typeof createLeadBodySchema>;

@@ -14,7 +14,7 @@ export type User = {
 };
 
 // Lead Sources
-export const leadSources = ["Instagram", "Website", "Booking.com", "Airbnb", "Referral", "WOM", "OTA"] as const;
+export const leadSources = ["Instagram", "Website", "Booking.com", "Airbnb", "Referral", "Contacted", "WOM", "OTA"] as const;
 export type LeadSource = typeof leadSources[number];
 
 // Lead Status
@@ -408,8 +408,14 @@ export interface CommunityDocumentsPagination {
 /** Pagination metadata from get_community_profiles edge function (same shape as documents) */
 export type CommunityProfilesPagination = CommunityDocumentsPagination;
 
-/** Who the material is for: community-wide vs client-specific */
-export type CommunityDocumentAudience = "common" | "client";
+/** Who the material is for: community-wide, client-specific, or manager-only internal docs. */
+export type CommunityDocumentAudience = "common" | "client" | "internal";
+
+export interface InternalDocumentManager {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+}
 
 // Community Document
 export interface CommunityDocument {
@@ -424,8 +430,12 @@ export interface CommunityDocument {
   type?: { id: string; value: MaterialTypeValue };
   url?: string;
   link?: string | null;
-  /** Storage object key for non-link materials: `community-documents` when common, `client-documents` when doc_type is client */
+  /** Storage object key for non-link materials: bucket is selected from doc_type. */
   file_path?: string | null;
+  /** Manager IDs allowed to access internal documents. */
+  assigned_manager_ids?: string[];
+  /** Optional expanded manager records for admin assignment UI. */
+  assigned_managers?: InternalDocumentManager[];
   created_at?: string;
 }
 
@@ -453,6 +463,54 @@ export type InsertProfile = z.infer<typeof insertProfileSchema>;
 /** Row in `user_roles` (read client-side for gating) */
 export const appUserRoles = ["admin", "manager", "client"] as const;
 export type AppUserRole = (typeof appUserRoles)[number];
+
+/** User/role row managed from the Settings admin panel. */
+export interface AdminManager {
+  id: string;
+  email: string;
+  full_name?: string | null;
+  name?: string | null;
+  role: AppUserRole;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface AdminManagersResponse {
+  managers: AdminManager[];
+}
+
+/** Contract for `create_admin_manager`: backend should create/invite the user and set role = manager. */
+export interface CreateAdminManagerPayload {
+  email: string;
+  full_name?: string;
+}
+
+export interface DeleteAdminManagerPayload {
+  user_id: string;
+}
+
+/** Contract for admin role assignment, backed by `user_roles`. */
+export interface AssignAdminManagerRolePayload {
+  user_id: string;
+  role: "manager";
+}
+
+export type AdminFilterListKey = "keywords" | "statuses" | "recipients";
+
+export interface AdminFilterSettings {
+  keywords: string[];
+  statuses: string[];
+  recipients: string[];
+}
+
+export type AdminFilterSettingsResponse = AdminFilterSettings;
+
+/** Contract for `update_admin_filter_settings`: backend persists all lists atomically. */
+export type UpdateAdminFilterSettingsPayload = AdminFilterSettings;
+
+export interface AdminActionSuccessResponse {
+  success: true;
+}
 
 /** Communication thread → `community_add_profile` JSON (onboarding) */
 export const createCommunityAccountSchema = z.object({

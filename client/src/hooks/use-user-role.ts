@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { AppUserRole } from "@shared/schema";
@@ -32,6 +33,28 @@ export function useUserRole() {
 
   const role = query.data?.role ?? null;
   const canViewCommunityAdminProfiles = role === "admin" || role === "manager";
+  const canViewInternalDocuments = role === "admin" || role === "manager";
+  const canAssignInternalDocuments = role === "admin";
+  const canManageSettings = role === "admin";
+  const canManageManagers = role === "admin";
+  const canManageFilters = role === "admin";
+  const canManageFilterSettings = canManageFilters;
 
-  return { ...query, role, canViewCommunityAdminProfiles };
+  useEffect(() => {
+    if (!query.isLoading) {
+      console.log("Current user role:", role);
+    }
+  }, [query.isLoading, role]);
+
+  return {
+    ...query,
+    role,
+    canViewCommunityAdminProfiles,
+    canViewInternalDocuments,
+    canAssignInternalDocuments,
+    canManageSettings,
+    canManageManagers,
+    canManageFilters,
+    canManageFilterSettings,
+  };
 }

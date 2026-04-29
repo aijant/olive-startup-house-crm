@@ -244,6 +244,7 @@ export default function LeadsPage() {
                 <SelectItem value="Booking.com">Booking.com</SelectItem>
                 <SelectItem value="Airbnb">Airbnb</SelectItem>
                 <SelectItem value="Referral">Referral</SelectItem>
+                <SelectItem value="Contacted">Contacted</SelectItem>
                 <SelectItem value="WOM">Word of Mouth</SelectItem>
                 <SelectItem value="OTA">OTA</SelectItem>
               </SelectContent>

@@ -4,23 +4,71 @@ import type { CommunityDocument } from "@shared/schema";
 export const COMMUNITY_DOCUMENTS_BUCKET = "community-documents";
 /** Parallel naming to community-documents; used when doc_type is client. */
 export const CLIENT_DOCUMENTS_BUCKET = "client-documents";
+/** Manager-only internal documents. */
+export const INTERNAL_DOCUMENTS_BUCKET = "internal-documents";
 
 export function storageBucketForCommunityDocument(
   doc: Pick<CommunityDocument, "doc_type">,
 ): string {
-  return doc.doc_type === "client" ? CLIENT_DOCUMENTS_BUCKET : COMMUNITY_DOCUMENTS_BUCKET;
+  if (doc.doc_type === "client") return CLIENT_DOCUMENTS_BUCKET;
+  if (doc.doc_type === "internal") return INTERNAL_DOCUMENTS_BUCKET;
+  return COMMUNITY_DOCUMENTS_BUCKET;
 }
 
 /** Maps raw Storage API errors to clearer copy when the bucket is missing or misconfigured. */
 export function formatCommunityDocumentDownloadError(message: string, bucket: string): string {
   if (/bucket not found/i.test(message)) {
     const tail =
-      bucket === CLIENT_DOCUMENTS_BUCKET
+      bucket === INTERNAL_DOCUMENTS_BUCKET
+        ? `Create "${INTERNAL_DOCUMENTS_BUCKET}" in Supabase Storage and ensure internal document uploads use that bucket.`
+        : bucket === CLIENT_DOCUMENTS_BUCKET
         ? `Create "${CLIENT_DOCUMENTS_BUCKET}" in Supabase Storage (see supabase/migrations/) and ensure load_community_document uploads client materials to that bucket.`
         : `Create "${COMMUNITY_DOCUMENTS_BUCKET}" in Supabase Storage (see supabase/migrations/) and ensure load_community_document uploads use that bucket.`;
     return `Storage bucket "${bucket}" was not found. ${tail}`;
   }
   return message;
+}
+
+async function previewUrlForKey(
+  supabase: SupabaseClient,
+  bucket: string,
+  key: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(key, 60);
+  if (!error && data?.signedUrl) {
+    return data.signedUrl;
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(bucket).getPublicUrl(key);
+  return publicUrl || null;
+}
+
+export async function openCommunityDocumentPreviewFromStorage(
+  supabase: SupabaseClient,
+  bucket: string,
+  rawPath: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const baseKey = normalizeCommunityDocumentStoragePath(rawPath, bucket);
+  if (!baseKey) {
+    return { ok: false, message: "Invalid file path" };
+  }
+
+  let lastMessage = "Object not found";
+  for (const key of storageKeyVariants(baseKey)) {
+    try {
+      const url = await previewUrlForKey(supabase, bucket, key);
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+        return { ok: true };
+      }
+    } catch (err) {
+      lastMessage = err instanceof Error ? err.message : lastMessage;
+    }
+  }
+
+  return { ok: false, message: formatCommunityDocumentDownloadError(lastMessage, bucket) };
 }
 
 /**

@@ -19,6 +19,7 @@ const sourceIcons: Record<string, string> = {
   "Booking.com": "📍",
   Airbnb: "📍",
   Referral: "📍",
+  Contacted: "📍",
   WOM: "📍",
   OTA: "📍",
 };

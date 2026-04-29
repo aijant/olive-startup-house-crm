@@ -47,14 +47,15 @@ export function LeadsTable({ leads, variant = "page" }: LeadsTableProps) {
       <Table className={tableDense}>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[11%] min-w-0">Name</TableHead>
-            <TableHead className="w-[14%] min-w-0">Email</TableHead>
+            <TableHead className="w-[10%] min-w-0">Name</TableHead>
+            <TableHead className="w-[13%] min-w-0">Email</TableHead>
             <TableHead className="w-[9%] min-w-0">Phone</TableHead>
-            <TableHead className="w-[12%] min-w-0">Location</TableHead>
-            <TableHead className="w-[19%] min-w-0">Message</TableHead>
+            <TableHead className="w-[11%] min-w-0">Location</TableHead>
+            <TableHead className="w-[9%] min-w-0">Source</TableHead>
+            <TableHead className="w-[14%] min-w-0">Message</TableHead>
             <TableHead className="w-[10%] min-w-0">Status</TableHead>
             <TableHead className="w-[9%] min-w-0">Created</TableHead>
-            <TableHead className="w-[11%] min-w-0 text-right whitespace-nowrap">
+            <TableHead className="w-[10%] min-w-0 text-right whitespace-nowrap">
               Actions
             </TableHead>
             <TableHead className="w-[5%] min-w-0 p-2 text-right whitespace-nowrap">
@@ -95,6 +96,11 @@ export function LeadsTable({ leads, variant = "page" }: LeadsTableProps) {
               </TableCell>
               <TableCell className="max-w-0">
                 <TruncatedCell compact value={lead.location} alwaysTooltip />
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                <Badge variant="outline" className="text-xs font-normal leading-tight">
+                  {lead.source}
+                </Badge>
               </TableCell>
               <TableCell className="max-w-0">
                 <TruncatedCell compact value={lead.message_text} />
